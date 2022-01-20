@@ -27,6 +27,9 @@ This is a log of the work that has been accomplished here. In other words, a run
     - Overlapping patterns
     - Guards
 - Syntax of the Core language:
+  - *Question*: Why is everything right-associative? And why can't we define associativity of `/` and `-`?
+  - No unary operators. `negate` and `not` are provided as functions
+  - BNF grammar for the Core language is located on [page 18 of the tutorial](https://www.microsoft.com/en-us/research/wp-content/uploads/1992/01/student.pdf#page=19)
   - We have the following operator precedence/associativity table:
   
 | Precedence | Associativity | Operator                         |
@@ -40,5 +43,19 @@ This is a log of the work that has been accomplished here. In other words, a run
 | 2          | right         | `&`                              |
 | 1          | right         | `|`                              |
 
-  - *Question*: Why is everything right-associative? And why can't we define associativity of `/` and `-`?
-  - No unary operators. `negate` and `not` are provided as functions
+- Data types for the Core languague:
+  - The book derives the `Text` typeclass for the `Expr` datatype; [this has long been replaced by the `Read` and `Show` typeclasses](https://www.haskell.org/definition/from12to13.html#newtext).
+  - The data type `Expr` is parameterized w.r.t. its **binders**. Binders are the type used to represent a variable. For our purposes, we will mostly use `Name` as the binding type. In Chapter 6, we will see types other than name in the binding position.
+    - (Saw this in EECS490 with de Bruijin indices, where the binders are numbers indicating the depth of a variable binding, so that two structurally equal de Bruijin types are alpha-equivalent)
+- Random thoughts/realizations:
+  - I finally understand what people mean when they say that (Haskell's) typeclasses are more powerful than (Java's) interfaces. Typeclasses allows one to define functions that are universally quantified *over multiple types*, not just the receiving type. You also get non-functions (e.g., constants or CAFs) in typeclasses. Typeclasses also allow for the visitor pattern (not being defined on the typeclass itself, but on all implementations of it). See [this SO answer](https://stackoverflow.com/a/6948534/2397327) -- I finally understand it now.
+  - I am starting to get a grasp of the higher-level type concepts, usually enabled via extensions:
+    - `MultiParamTypeClasses`: like type classes and multiple dispatch (multiple receivers)
+    - `TypeApplications`: explicitly specifying the concrete type of a polymorphic function
+    - `RankNTypes`: universally-quantified polymorphism over part of a type declaration (in other words, multiple "levels" of universally-quantified polymorphism, extending prenex (rank-1) polymorphism)
+    - `TypeFamilies`: polymorphism at the type constructor level; each instance (type) of a type family can have different type constructor implementations, just as each instance (type) of a typeclass can have different method implementations
+  - On the other hand, not too familiar with a lot of other common extensions, partially due to just not having enough time to spend understanding them:
+    - `GADT`: what does the "generalized" mean in generalized algebraic data types?
+    - `ExistentialQuantification`: I understand universal polymorphism, and nested universal polymorphism (rank-n types) but not this; why does this also use the `forall` keyword (universal quantification also uses this?)
+    - I found this: [24 Days of GHC Extensions](https://blog.ocharles.org.uk/blog/posts/2014-12-01-24-days-of-ghc-extensions.html) (a blog series)
+  - I could really use a faster computer for my my Haskell/OCaml work. Even Emacs is slow (but that is probably partially due to some combination of my extensions) :(

@@ -10,6 +10,8 @@ $ stack run
 $ stack test
 ```
 
+All Haskell code is auto-formatted using the [brittany][brittany] formatter.
+
 ### Journal
 See [JOURNAL.md][JOURNAL.md] for a running set of notes on this project.
 
@@ -24,3 +26,4 @@ The following diagram is taken from the tutorial's preface.
 [tutor.pdf]: https://www.microsoft.com/en-us/research/uploads/prod/1992/01/tutor.pdf
 [implementation_overview.png]: ./res/implementation_overview.png
 [JOURNAL.md]: ./JOURNAL.md
+[brittany]: https://hackage.haskell.org/package/brittany

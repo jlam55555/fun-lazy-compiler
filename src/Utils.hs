@@ -75,10 +75,10 @@ aEmpty = []
 -- A.3 Generating unique names
 type NameSupply = Int
 
-getName :: NameSupply -> [Char] -> (NameSupply, [Char])
+getName :: NameSupply -> String -> (NameSupply, String)
 getName name_supply prefix = (name_supply + 1, makeName prefix name_supply)
 
-getNames :: NameSupply -> [[Char]] -> (NameSupply, [[Char]])
+getNames :: NameSupply -> [String] -> (NameSupply, [String])
 getNames name_supply prefixes =
   (name_supply + length prefixes, zipWith makeName prefixes [name_supply ..])
 
