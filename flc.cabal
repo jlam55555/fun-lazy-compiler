@@ -25,13 +25,17 @@ source-repository head
 
 library
   exposed-modules:
+      Language
       Lib
+      Utils
   other-modules:
       Paths_flc
   hs-source-dirs:
       src
   build-depends:
       base >=4.7 && <5
+    , containers ==0.6.5.1
+    , sort ==1.0.0.0
   default-language: Haskell2010
 
 executable flc-exe
@@ -43,7 +47,9 @@ executable flc-exe
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , containers ==0.6.5.1
     , flc
+    , sort ==1.0.0.0
   default-language: Haskell2010
 
 test-suite flc-test
@@ -56,5 +62,7 @@ test-suite flc-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
+    , containers ==0.6.5.1
     , flc
+    , sort ==1.0.0.0
   default-language: Haskell2010
