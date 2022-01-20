@@ -28,6 +28,7 @@ This is a log of the work that has been accomplished here. In other words, a run
     - Guards
 - Syntax of the Core language:
   - We have the following operator precedence/associativity table:
+  
 | Precedence | Associativity | Operator                         |
 |------------|---------------|----------------------------------|
 | 6          | left          | ` ` (function application)       |
@@ -38,5 +39,6 @@ This is a log of the work that has been accomplished here. In other words, a run
 | 3          | none          | `==`, `~=`, `>`, `>=`, `<`, `<=` |
 | 2          | right         | `&`                              |
 | 1          | right         | `|`                              |
+
   - *Question*: Why is everything right-associative? And why can't we define associativity of `/` and `-`?
   - No unary operators. `negate` and `not` are provided as functions

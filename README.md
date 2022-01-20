@@ -23,4 +23,4 @@ The following diagram is taken from the tutorial's preface.
 [student.pdf]: https://www.microsoft.com/en-us/research/wp-content/uploads/1992/01/student.pdf
 [tutor.pdf]: https://www.microsoft.com/en-us/research/uploads/prod/1992/01/tutor.pdf
 [implementation_overview.png]: ./res/implementation_overview.png
-[JOURNAL.md][./JOURNAL.md]
+[JOURNAL.md]: ./JOURNAL.md
