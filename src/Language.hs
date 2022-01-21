@@ -3,7 +3,7 @@ module Language
   , CoreScDefn
   , Expr(..)
   , CoreExpr
-  , CoreAlt
+  , CoreAlter
   , Name
   , IsRec
   , recursive
@@ -45,7 +45,7 @@ nonRecursive = False
 
 -- Case rules/alternatives
 type Alter a = (Int, [a], Expr a)
-type CoreAlt = Alter Name
+type CoreAlter = Alter Name
 
 -- Useful helper functions
 
@@ -56,6 +56,6 @@ rhssOf :: [(a, b)] -> [b]
 rhssOf defns = [ rhs | (_, rhs) <- defns ]
 
 isAtomicExpr :: Expr a -> Bool
-isAtomicExpr (EVar v) = True
-isAtomicExpr (ENum n) = True
-isAtomicExpr e        = False
+isAtomicExpr (EVar _) = True
+isAtomicExpr (ENum _) = True
+isAtomicExpr _        = False

@@ -1,9 +1,10 @@
-module Exercises.PrettyPrintPerf
-  () where
+module Exercises.PrettyPrintPerf where
 
+import           Control.Exception
 import           Iseq
 import           Language
 import qualified PrettyPrint
+import           Utils
 
 -- Demonstrate the performance issue with ++ and left-associativity.
 -- Page 22 in the tutorial, exercise 1.1.
@@ -13,6 +14,7 @@ pprExpr :: CoreExpr -> String
 pprExpr (ENum n   ) = show n
 pprExpr (EVar v   ) = v
 pprExpr (EAp e1 e2) = pprExpr e1 ++ " " ++ pprAExpr e2
+pprExpr _           = throw NotImplementedError
 
 -- (Naive) pretty print atomic (place parens around expression
 -- unless it is already an atom)

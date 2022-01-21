@@ -6,6 +6,7 @@ See tutorial (for [students][student.pdf]; for [tutors][tutor.pdf])
 ### Build instructions
 This project uses the Haskell [Stack][stack] build environment. To build or run tests:
 ```bash
+$ stack build --ghc-options -Wall
 $ stack run
 $ stack test
 ```

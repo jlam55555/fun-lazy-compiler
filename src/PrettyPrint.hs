@@ -16,12 +16,12 @@ pprint prog = iDisplay $ pprProgram prog
 
 -- Program to iseq
 pprProgram :: CoreProgram -> Iseq
-pprProgram prog = iInterleave iNewline (map pprScDefn prog)
+pprProgram prog = iInterleave sep (map pprScDefn prog)
+  where sep = iConcat [iStr " ;", iNewline]
 
 -- Supercombinator to iseq
 pprScDefn :: CoreScDefn -> Iseq
-pprScDefn (name, args, body) = iConcat
-  [lhs, iStr "=", pprExpr body, iStr ";", iNewline]
+pprScDefn (name, args, body) = iConcat [lhs, iStr " = ", pprExpr body]
   where lhs = iInterleave (iStr " ") (map iStr (name : args))
 
 -- Expression to iseq
@@ -40,12 +40,30 @@ pprExpr (ELet isrec defns expr) = iConcat
   ]
  where
   keyword | not isrec = "let"
-          | isrec     = "letrec"
+          | otherwise = "letrec"
+pprExpr (ECase scrut alters) =
+  iConcat [iStr "case ", pprExpr scrut, iStr " of ", pprAlters alters]
+pprExpr (EConstr tag arity) = iConcat
+  [iStr "Pack{ ", iStr (show tag), iStr ", ", iStr (show arity), iStr " }"]
+pprExpr (ELam args body) = iConcat [iStr "\\ ", lhs, iStr " . ", pprExpr body]
+  where lhs = iConcat (map iStr args)
+
+-- Alter list to iseq
+pprAlters :: [CoreAlter] -> Iseq
+pprAlters alters = iInterleave sep (map pprAlter alters)
+  where sep = iConcat [iStr " ;", iNewline]
+
+-- Alter to iseq
+pprAlter :: CoreAlter -> Iseq
+pprAlter (tag, args, body) = iConcat [lhs, iStr " -> ", pprExpr body]
+ where
+  tagSeq = iConcat [iStr "<", iStr (show tag), iStr ">"]
+  lhs    = iInterleave (iStr " ") (tagSeq : map iStr args)
 
 -- Definition list to iseq
 pprDefns :: [(Name, CoreExpr)] -> Iseq
 pprDefns defns = iInterleave sep (map pprDefn defns)
-  where sep = iConcat [iStr ";", iNewline]
+  where sep = iConcat [iStr " ;", iNewline]
 
 -- Definition to iseq
 pprDefn :: (Name, CoreExpr) -> Iseq
@@ -55,4 +73,4 @@ pprDefn (name, expr) = iConcat [iStr name, iStr " = ", iIndent (pprExpr expr)]
 -- not already an atom)
 pprAExpr :: CoreExpr -> Iseq
 pprAExpr e | isAtomicExpr e = pprExpr e
-           | otherwise      = iConcat [iStr "(", pprExpr e, iStr ")"]
+           | otherwise      = iConcat [iStr "( ", pprExpr e, iStr " )"]

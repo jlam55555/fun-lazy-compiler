@@ -12,6 +12,7 @@ module Alloc
   , hIsnull
   ) where
 
+import           Control.Exception
 import           Data.AssocList
 
 newtype Heap a = Heap (Int, [Addr], [(Addr, a)])
@@ -33,10 +34,15 @@ instance Num Addr where
 instance Show Addr where
   show (Addr a) = "#" ++ show a
 
+data InvalidHeapError = InvalidHeapError
+  deriving Show
+instance Exception InvalidHeapError
+
 hInitial :: Heap a
 hInitial = Heap (0, map Addr [1 ..], [])
 
 hAlloc :: Heap a -> a -> (Heap a, Addr)
+hAlloc (Heap (_, [], _)) _ = throw InvalidHeapError
 hAlloc (Heap (size, (next : free), cts)) n =
   (Heap (size + 1, free, (next, n) : cts), next)
 
@@ -65,5 +71,5 @@ hIsnull a = a == 0
 remove :: [(Addr, a)] -> Addr -> [(Addr, a)]
 remove [] a =
   error ("Attempt to update or free a nonexistent address " ++ show a)
-remove ((a', n) : cts) a | a == a' = cts
-                         | a /= a' = (a', n) : remove cts a
+remove ((a', n) : cts) a | a == a'   = cts
+                         | otherwise = (a', n) : remove cts a

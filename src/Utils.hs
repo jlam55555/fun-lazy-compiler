@@ -14,7 +14,7 @@ instance Exception NotImplementedError
 
 -- Map/fold combination
 mapAccuml :: (a -> b -> (a, c)) -> a -> [b] -> (a, [c])
-mapAccuml f acc []       = (acc, [])
+mapAccuml _ acc []       = (acc, [])
 mapAccuml f acc (x : xs) = (acc2, x' : xs')
  where
   (acc1, x' ) = f acc x

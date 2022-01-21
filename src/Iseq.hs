@@ -39,11 +39,11 @@ iNewline = iStr "\n"
 -- Indent an iseq
 -- (Currently ignoring indentation)
 iIndent :: Iseq -> Iseq
-iIndent seq = seq
+iIndent iseq = iseq
 
 -- Turn an iseq into a string
 iDisplay :: Iseq -> String
-iDisplay seq = flatten [seq]
+iDisplay iseq = flatten [iseq]
 
 -- Helper for iDisplay: concatenate in roughly linear time
 -- (Reduces right-associatively.)
@@ -75,6 +75,6 @@ iConcat iseqList = foldl iAppend iNil iseqList
 -- Interleave an iseq between every element in a
 -- list of iseqs
 iInterleave :: Iseq -> [Iseq] -> Iseq
-iInterleave delim [] = iNil
+iInterleave _ [] = iNil
 iInterleave delim (seqListHd : seqListTl) =
   foldl (\acc term -> iConcat [acc, delim, term]) seqListHd seqListTl
