@@ -1,4 +1,6 @@
-module CorePrelude where
+module CorePrelude
+  ( preludeDefs
+  ) where
 
 import           Language
 

@@ -30,7 +30,6 @@ library
       Exercises.PrettyPrintPerf
       Iseq
       Language
-      Lib
       NameSupply
       PrettyPrint
       Utils

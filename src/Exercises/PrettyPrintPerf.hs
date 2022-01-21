@@ -1,4 +1,5 @@
-module Exercises.PrettyPrintPerf where
+module Exercises.PrettyPrintPerf
+  () where
 
 import           Iseq
 import           Language

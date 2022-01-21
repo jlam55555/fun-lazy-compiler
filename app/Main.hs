@@ -1,6 +1,6 @@
-module Main where
-
-import Language
+module Main
+  ( main
+  ) where
 
 main :: IO ()
 main = print "Hello, world!"
