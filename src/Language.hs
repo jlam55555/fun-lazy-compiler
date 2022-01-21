@@ -1,6 +1,17 @@
-module Language where
-
-import           Utils
+module Language
+  ( CoreProgram
+  , CoreScDefn
+  , Expr(..)
+  , CoreExpr
+  , CoreAlt
+  , Name
+  , IsRec
+  , recursive
+  , nonRecursive
+  , bindersOf
+  , rhssOf
+  , isAtomicExpr
+  ) where
 
 -- Datatypes for Core syntax
 

@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - sort == 1.0.0.0
 - containers == 0.6.5.1
+- hxt == 9.3.1.16               # for Data.AssocList
 
 library:
   source-dirs: src

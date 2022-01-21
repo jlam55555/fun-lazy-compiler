@@ -1,5 +1,6 @@
 module Exercises.PrettyPrintPerf where
 
+import           Iseq
 import           Language
 import qualified PrettyPrint
 
@@ -37,9 +38,7 @@ exercise1_1 n = length $ pprExpr $ mkMultiAp n (EVar "f") (EVar "x")
 -- Runs in linear number of steps wrt n.
 -- (Also see alternative implementation of flatten.)
 exercise1_4 :: Int -> Int
-exercise1_4 n = length $ PrettyPrint.iDisplay $ PrettyPrint.pprExpr $ mkMultiAp
-  n
-  (EVar "f")
-  (EVar "x")
+exercise1_4 n =
+  length $ iDisplay $ PrettyPrint.pprExpr $ mkMultiAp n (EVar "f") (EVar "x")
 
 -- Exercise 1.5: see implementation of iAppend.
