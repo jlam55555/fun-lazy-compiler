@@ -1,5 +1,13 @@
 module Utils where
 
+import Control.Exception
+
+-- NotImplementedError for incomplete programs
+data NotImplementedError = NotImplementedError
+  deriving Show
+
+instance Exception NotImplementedError
+
 -- A.1 Heap and address types
 newtype Heap a = Heap (Int, [Addr], [(Addr, a)])
 
