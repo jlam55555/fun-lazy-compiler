@@ -33,6 +33,16 @@ isInfix (EVar op) =
   elem op ["*", "/", "+", "-", "==", "~=", ">", ">=", "<", "<=", "&", "|"]
 isInfix _ = False
 
+data Associativity = AscLeft | AscRight | AscNone
+  deriving Eq
+
+opAsc :: CoreExpr -> Associativity
+opAsc (EVar op)
+  | op `elem` ["*", "+", "&", "|"] = AscRight
+  | op `elem` ["/", "-", "==", "~=", ">", ">=", "<", "<="] = AscNone
+  | otherwise                      = AscLeft
+opAsc _ = AscNone
+
 -- Ordered enum describing precedence levels for infix operators
 data PrecLevel = PrecAtom
   | PrecAp
@@ -93,21 +103,26 @@ pprExpr' _ (ENum n) = iStr (show n)
 pprExpr' _ (EVar v) = iStr v
 pprExpr' _ (EAp (EAp op e1) e2)
   |
-  -- Infix operator: wrap subexpressions if lower precedence than operator
-    isInfix op = iConcat
-    [ pprExpr'' (opPrec op) e1
-    , iStr " "
-    , pprExpr op
-    , iStr " "
-    , pprExpr'' (opPrec op) e2
-    ]
+  -- Infix operator
+    isInfix op
+  = let asc = opAsc op
+    in  iConcat
+          [ pprExpr'' (opPrec op) (asc /= AscLeft) e1
+          , iStr " "
+          , pprExpr op
+          , iStr " "
+          , pprExpr'' (opPrec op) (asc /= AscRight) e2
+          ]
   |
-  -- Regular function composition, note precedence levels
-    otherwise = iConcat
-    [pprExpr'' PrecAp (EAp op e1), iStr " ", pprExpr'' PrecAtom e2]
+  -- Regular function composition; exactly the same as above, treat
+  -- function application as a left-associative infix operator " "
+  -- with precedence PrecAp
+    otherwise
+  = iConcat
+    [pprExpr'' PrecAp False (EAp op e1), iStr " ", pprExpr'' PrecAp True e2]
 pprExpr' _ (EAp e1 e2) =
-  -- Regular function application, note precedence levels
-  iConcat [pprExpr'' PrecAp e1, iStr " ", pprExpr'' PrecAtom e2]
+  -- Regular function application
+  iConcat [pprExpr'' PrecAp False e1, iStr " ", pprExpr'' PrecAp True e2]
 pprExpr' _ (ELet isrec defns expr) = iConcat
   [ iStr keyword
   , iStr " "
@@ -129,11 +144,19 @@ pprExpr' _ (ELam args body) = iConcat
 
 -- Mutually-recursive helper to pprExpr' that wraps the expression in
 -- parentheses if the context precedence is greater than the expression's
--- precedence.
-pprExpr'' :: PrecLevel -> CoreExpr -> Iseq
-pprExpr'' prec e = if prec > opPrec e
-  then iConcat [iStr "( ", iIndent $ pprExpr' prec e, iStr " )"]
-  else pprExpr e
+-- precedence. The second parameter denotes whether the associativity
+-- indicates to wrap expressions of equal precedence:
+-- - A left-associative operator needs to wrap expressions on the right
+--   with the same precedence.
+-- - A right-associative operator needs to wrap expressions on the left
+--   with the same precedence.
+-- - A non-associative operator needs to wrap expressions on both sides
+--   with the same precedence.
+pprExpr'' :: PrecLevel -> Bool -> CoreExpr -> Iseq
+pprExpr'' prec wrapEqPrec e =
+  if (if wrapEqPrec then (>=) else (>)) prec (opPrec e)
+    then iConcat [iStr "( ", iIndent $ pprExpr' prec e, iStr " )"]
+    else pprExpr e
 
 -- Alter list to iseq
 pprAlters :: [CoreAlter] -> Iseq
