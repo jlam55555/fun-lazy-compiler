@@ -1,5 +1,7 @@
-module PrettyPrintInfix
-  () where
+module Exercises.PrettyPrintInfix
+  ( exercise1_8
+  , infix_exs
+  ) where
 
 import           Iseq
 import           Language
@@ -12,7 +14,6 @@ exercise1_8 = putStrLn $ iDisplay $ pprExpr $ EAp
   (EAp (EAp (EVar "*") (EVar "p")) (EAp (EVar "length") (EVar "xs")))
 
 -- Other examples
-
 infix_exs :: IO ()
 infix_exs = putStrLn $ iDisplay $ pprProgram $ map
   (\expr -> ("test", [], expr))

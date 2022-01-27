@@ -27,6 +27,7 @@ library
   exposed-modules:
       Alloc
       CorePrelude
+      Exercises.PrettyPrintInfix
       Exercises.PrettyPrintPerf
       Iseq
       Language
@@ -40,7 +41,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers ==0.6.5.1
-    , hxt ==9.3.1.16
+    , hxt ==9.3.1.22
     , sort ==1.0.0.0
     , split ==0.2.3.4
   default-language: Haskell2010
@@ -56,7 +57,7 @@ executable flc-exe
       base >=4.7 && <5
     , containers ==0.6.5.1
     , flc
-    , hxt ==9.3.1.16
+    , hxt ==9.3.1.22
     , sort ==1.0.0.0
     , split ==0.2.3.4
   default-language: Haskell2010
@@ -73,7 +74,7 @@ test-suite flc-test
       base >=4.7 && <5
     , containers ==0.6.5.1
     , flc
-    , hxt ==9.3.1.16
+    , hxt ==9.3.1.22
     , sort ==1.0.0.0
     , split ==0.2.3.4
   default-language: Haskell2010
