@@ -87,10 +87,9 @@ opPrec (EVar "|"   ) = PrecDisj
 opPrec (ENum _     ) = PrecAtom
 opPrec (EVar _     ) = PrecAtom
 opPrec (EConstr _ _) = PrecAtom
-opPrec (EAp op _) =
-  -- Returns infix operator precedence or PrecAp
-  let prec = opPrec op
-  in  if prec >= PrecDisj && prec <= PrecMulDiv then prec else PrecAp
+opPrec (EAp (EAp opExpr@(EVar _) _) _) | isInfix opExpr = opPrec opExpr
+                                       | otherwise      = PrecAp
+opPrec (EAp _ _   ) = PrecAp
 opPrec (ELet _ _ _) = PrecBase
 opPrec (ECase _ _ ) = PrecBase
 opPrec (ELam  _ _ ) = PrecBase
@@ -104,12 +103,11 @@ pprExpr = pprExpr' PrecBase
 pprExpr' :: PrecLevel -> CoreExpr -> Iseq
 pprExpr' _ (ENum n) = iStr (show n)
 pprExpr' _ (EVar v) = iStr v
-pprExpr' _ (EAp (EAp op e1) e2)
+pprExpr' _ e@(EAp e'@(EAp op e1) e2)
   |
   -- Infix operator
-    isInfix op
-  = let asc  = opAsc op
-        prec = opPrec op
+    prec /= PrecAp
+  = let asc = opAsc op
     in  iConcat
           [ pprExpr'' prec (asc /= AscLeft) e1
           , iStr " "
@@ -118,12 +116,12 @@ pprExpr' _ (EAp (EAp op e1) e2)
           , pprExpr'' prec (asc /= AscRight) e2
           ]
   |
-  -- Regular function composition; almost same as above, treat
-  -- function application as a left-associative infix operator " "
+  -- Regular prefix function applied to two arguments. Treat
+  -- function application (" ") as a left-associative infix operator
   -- with precedence PrecAp
     otherwise
-  = iConcat
-    [pprExpr'' PrecAp False (EAp op e1), iStr " ", pprExpr'' PrecAp True e2]
+  = iConcat [pprExpr'' PrecAp False e', iStr " ", pprExpr'' PrecAp True e2]
+  where prec = opPrec e
 pprExpr' _ (EAp e1 e2) =
   -- Regular function application
   iConcat [pprExpr'' PrecAp False e1, iStr " ", pprExpr'' PrecAp True e2]
