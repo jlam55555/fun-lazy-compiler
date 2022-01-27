@@ -36,12 +36,15 @@ isInfix _ = False
 data Associativity = AscLeft | AscRight | AscNone
   deriving Eq
 
+-- Associativity of an operator/function in the function position
+-- of a EAp. If it is not one of the infix operators, it is an
+-- ordinary prefix function (in which space is left-associative).
 opAsc :: CoreExpr -> Associativity
 opAsc (EVar op)
   | op `elem` ["*", "+", "&", "|"] = AscRight
   | op `elem` ["/", "-", "==", "~=", ">", ">=", "<", "<="] = AscNone
   | otherwise                      = AscLeft
-opAsc _ = AscNone
+opAsc _ = AscLeft
 
 -- Ordered enum describing precedence levels for infix operators
 data PrecLevel = PrecAtom
@@ -87,7 +90,7 @@ opPrec (EConstr _ _) = PrecAtom
 opPrec (EAp op _) =
   -- Returns infix operator precedence or PrecAp
   let prec = opPrec op
-  in  if prec >= PrecDisj && prec <= PrecAp then prec else PrecAp
+  in  if prec >= PrecDisj && prec <= PrecMulDiv then prec else PrecAp
 opPrec (ELet _ _ _) = PrecBase
 opPrec (ECase _ _ ) = PrecBase
 opPrec (ELam  _ _ ) = PrecBase
@@ -105,16 +108,17 @@ pprExpr' _ (EAp (EAp op e1) e2)
   |
   -- Infix operator
     isInfix op
-  = let asc = opAsc op
+  = let asc  = opAsc op
+        prec = opPrec op
     in  iConcat
-          [ pprExpr'' (opPrec op) (asc /= AscLeft) e1
+          [ pprExpr'' prec (asc /= AscLeft) e1
           , iStr " "
           , pprExpr op
           , iStr " "
-          , pprExpr'' (opPrec op) (asc /= AscRight) e2
+          , pprExpr'' prec (asc /= AscRight) e2
           ]
   |
-  -- Regular function composition; exactly the same as above, treat
+  -- Regular function composition; almost same as above, treat
   -- function application as a left-associative infix operator " "
   -- with precedence PrecAp
     otherwise
