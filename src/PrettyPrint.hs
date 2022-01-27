@@ -20,19 +20,22 @@ pprProgram prog = iInterleave sep (map pprScDefn prog)
   where sep = iConcat [iStr " ;", iNewline]
 
 -- Supercombinator to iseq
+-- Body is automatically put on a new line in case the args are long,
+-- still looks okay even if there are no args
 pprScDefn :: CoreScDefn -> Iseq
-pprScDefn (name, args, body) = iConcat [lhs, iStr " = ", pprExpr body]
+pprScDefn (name, args, body) = iConcat
+  [lhs, iStr " = ", iNewline, iStr "  ", iIndent $ pprExpr body]
   where lhs = iInterleave (iStr " ") (map iStr (name : args))
 
 -- Expression to iseq
+-- Exercise 1.3: Write remaining rules.
 pprExpr :: CoreExpr -> Iseq
 pprExpr (ENum n               ) = iStr (show n)
 pprExpr (EVar v               ) = iStr v
 pprExpr (EAp e1 e2            ) = iConcat [pprExpr e1, iStr " ", pprAExpr e2]
 pprExpr (ELet isrec defns expr) = iConcat
   [ iStr keyword
-  , iNewline
-  , iStr "  "
+  , iStr " "
   , iIndent (pprDefns defns)
   , iNewline
   , iStr "in "

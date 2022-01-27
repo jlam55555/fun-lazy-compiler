@@ -39,7 +39,6 @@ exercise1_1 n = length $ pprExpr $ mkMultiAp n (EVar "f") (EVar "x")
 -- of iConcat, iInterleave, pprExpr, pprAExpr, pprScDefn, pprProgram
 
 -- Runs in linear number of steps wrt n.
--- (Also see alternative implementation of flatten.)
 exercise1_4 :: Int -> Int
 exercise1_4 n =
   length $ iDisplay $ PrettyPrint.pprExpr $ mkMultiAp n (EVar "f") (EVar "x")

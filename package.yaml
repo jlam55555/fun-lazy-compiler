@@ -24,6 +24,7 @@ dependencies:
 - sort == 1.0.0.0
 - containers == 0.6.5.1
 - hxt == 9.3.1.16               # for Data.AssocList
+- split == 0.2.3.4
 
 library:
   source-dirs: src
