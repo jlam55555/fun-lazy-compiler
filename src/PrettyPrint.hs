@@ -27,24 +27,14 @@ pprScDefn (name, args, body) = iConcat
   [lhs, iStr " = ", iNewline, iStr "  ", iIndent $ pprExpr body]
   where lhs = iInterleave (iStr " ") (map iStr (name : args))
 
--- Helper to determine whether a core expression is an infix operator
-isInfix :: CoreExpr -> Bool
-isInfix (EVar op) =
-  elem op ["*", "/", "+", "-", "==", "~=", ">", ">=", "<", "<=", "&", "|"]
-isInfix _ = False
-
 data Associativity = AscLeft | AscRight | AscNone
   deriving Eq
 
--- Associativity of an operator/function in the function position
--- of a EAp. If it is not one of the infix operators, it is an
--- ordinary prefix function (in which space is left-associative).
-opAsc :: CoreExpr -> Associativity
-opAsc (EVar op)
-  | op `elem` ["*", "+", "&", "|"] = AscRight
-  | op `elem` ["/", "-", "==", "~=", ">", ">=", "<", "<="] = AscNone
-  | otherwise                      = AscLeft
-opAsc _ = AscLeft
+-- Associativity of an infix operator
+opAsc :: String -> Associativity
+opAsc op | op `elem` ["*", "+", "&", "|"] = AscRight
+         | op `elem` ["/", "-", "==", "~=", ">", ">=", "<", "<="] = AscNone
+         | otherwise                      = AscLeft
 
 -- Ordered enum describing precedence levels for infix operators
 data PrecLevel = PrecAtom
@@ -70,29 +60,34 @@ intOfPrecLevel PrecBase   = 0
 instance Ord PrecLevel where
   (<=) a b = intOfPrecLevel a <= intOfPrecLevel b
 
+opPrec :: String -> PrecLevel
+opPrec "*"  = PrecMulDiv
+opPrec "/"  = PrecMulDiv
+opPrec "+"  = PrecAddSub
+opPrec "-"  = PrecAddSub
+opPrec "==" = PrecRel
+opPrec "~=" = PrecRel
+opPrec "<"  = PrecRel
+opPrec "<=" = PrecRel
+opPrec ">"  = PrecRel
+opPrec ">=" = PrecRel
+opPrec "&"  = PrecConj
+opPrec "|"  = PrecDisj
+opPrec _    = PrecAp
+
 -- Determine the infix precedence of a Core expression.
-opPrec :: CoreExpr -> PrecLevel
-opPrec (EVar "*"   ) = PrecMulDiv
-opPrec (EVar "/"   ) = PrecMulDiv
-opPrec (EVar "+"   ) = PrecAddSub
-opPrec (EVar "-"   ) = PrecAddSub
-opPrec (EVar "=="  ) = PrecRel
-opPrec (EVar "~="  ) = PrecRel
-opPrec (EVar "<"   ) = PrecRel
-opPrec (EVar "<="  ) = PrecRel
-opPrec (EVar ">"   ) = PrecRel
-opPrec (EVar ">="  ) = PrecRel
-opPrec (EVar "&"   ) = PrecConj
-opPrec (EVar "|"   ) = PrecDisj
-opPrec (ENum _     ) = PrecAtom
-opPrec (EVar _     ) = PrecAtom
-opPrec (EConstr _ _) = PrecAtom
-opPrec (EAp (EAp opExpr@(EVar _) _) _) | isInfix opExpr = opPrec opExpr
-                                       | otherwise      = PrecAp
-opPrec (EAp _ _   ) = PrecAp
-opPrec (ELet _ _ _) = PrecBase
-opPrec (ECase _ _ ) = PrecBase
-opPrec (ELam  _ _ ) = PrecBase
+exprPrec :: CoreExpr -> PrecLevel
+exprPrec (ENum _) = PrecAtom
+exprPrec (EVar x) | -- Operators as atoms should be wrapped in parens
+                    prec /= PrecAp = PrecBase
+                  | otherwise      = PrecAtom
+  where prec = opPrec x
+exprPrec (EConstr _                 _) = PrecAtom
+exprPrec (EAp     (EAp (EVar op) _) _) = opPrec op
+exprPrec (EAp     _                 _) = PrecAp
+exprPrec (ELet _ _ _                 ) = PrecBase
+exprPrec (ECase _ _                  ) = PrecBase
+exprPrec (ELam  _ _                  ) = PrecBase
 
 -- Expression to iseq
 -- Exercise 1.3: Write remaining rules.
@@ -103,7 +98,7 @@ pprExpr = pprExpr' PrecBase
 pprExpr' :: PrecLevel -> CoreExpr -> Iseq
 pprExpr' _ (ENum n) = iStr (show n)
 pprExpr' _ (EVar v) = iStr v
-pprExpr' _ e@(EAp e'@(EAp op e1) e2)
+pprExpr' _ e@(EAp e'@(EAp (EVar op) e1) e2)
   |
   -- Infix operator
     prec /= PrecAp
@@ -111,7 +106,7 @@ pprExpr' _ e@(EAp e'@(EAp op e1) e2)
     in  iConcat
           [ pprExpr'' prec (asc /= AscLeft) e1
           , iStr " "
-          , pprExpr op
+          , iStr op
           , iStr " "
           , pprExpr'' prec (asc /= AscRight) e2
           ]
@@ -121,7 +116,7 @@ pprExpr' _ e@(EAp e'@(EAp op e1) e2)
   -- with precedence PrecAp
     otherwise
   = iConcat [pprExpr'' PrecAp False e', iStr " ", pprExpr'' PrecAp True e2]
-  where prec = opPrec e
+  where prec = exprPrec e
 pprExpr' _ (EAp e1 e2) =
   -- Regular function application
   iConcat [pprExpr'' PrecAp False e1, iStr " ", pprExpr'' PrecAp True e2]
@@ -156,7 +151,7 @@ pprExpr' _ (ELam args body) = iConcat
 --   with the same precedence.
 pprExpr'' :: PrecLevel -> Bool -> CoreExpr -> Iseq
 pprExpr'' prec wrapEqPrec e =
-  if (if wrapEqPrec then (>=) else (>)) prec (opPrec e)
+  if (if wrapEqPrec then (>=) else (>)) prec (exprPrec e)
     then iConcat [iStr "( ", iIndent $ pprExpr' prec e, iStr " )"]
     else pprExpr e
 
