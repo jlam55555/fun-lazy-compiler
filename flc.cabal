@@ -31,7 +31,9 @@ library
       Exercises.PrettyPrintPerf
       Iseq
       Language
+      Lexer
       NameSupply
+      Parser
       PrettyPrint
       Utils
   other-modules:
