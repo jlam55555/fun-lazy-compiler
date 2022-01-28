@@ -1,4 +1,7 @@
-module Exercises.PrettyPrintPerf where
+module Exercises.PrettyPrintPerf
+  ( exercise1_1
+  , exercise1_4
+  ) where
 
 import           Control.Exception
 import           Iseq
@@ -42,5 +45,3 @@ exercise1_1 n = length $ pprExpr $ mkMultiAp n (EVar "f") (EVar "x")
 exercise1_4 :: Int -> Int
 exercise1_4 n =
   length $ iDisplay $ PrettyPrint.pprExpr $ mkMultiAp n (EVar "f") (EVar "x")
-
--- Exercise 1.5: see implementation of iAppend.
