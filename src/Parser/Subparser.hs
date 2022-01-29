@@ -50,7 +50,7 @@ pNum = pApply pNumString read where pNumString = pSat $ isDigit . head
 -- Example:
 -- pHelloOrGoodbye = (pLit "hello") `pAlt` (pLit "goodbye")
 pAlt :: Parser a -> Parser a -> Parser a
-pAlt p1 p2 toks = (p1 toks) ++ (p2 toks)
+pAlt p1 p2 toks = p1 toks ++ p2 toks
 
 -- Combines two parsers into a new parser, which performs
 -- sequential parses using the first parser followed by the

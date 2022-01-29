@@ -131,8 +131,14 @@ pprExpr' _ (ELet isrec defns expr) = iConcat
  where
   keyword | not isrec = "let"
           | otherwise = "letrec"
-pprExpr' _ (ECase scrut alters) =
-  iConcat [iStr "case ", pprExpr scrut, iStr " of ", pprAlters alters]
+pprExpr' _ (ECase scrut alters) = iConcat
+  [ iStr "case "
+  , pprExpr scrut
+  , iStr " of "
+  , iNewline
+  , iStr "  "
+  , iIndent $ pprAlters alters
+  ]
 pprExpr' _ (EConstr tag arity) = iConcat
   [iStr "Pack{ ", iStr (show tag), iStr ", ", iStr (show arity), iStr " }"]
 pprExpr' _ (ELam args body) = iConcat
