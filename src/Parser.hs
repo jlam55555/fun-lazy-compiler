@@ -32,20 +32,20 @@ pSc = pThen4 mk_sc pVar (pZeroOrMore pVar) (pLit "=") pExpr
   where mk_sc name args _ body = (name, args, body)
 
 -- Parse an expression
-pExpr, pEVar, pENum, pConstr, pAp, pLet, pCase, pLam :: Parser CoreExpr
-pExpr = foldl1 pAlt
-               [pEVar, pENum, pConstr, pAp, pLet, pCase, pLam, pWrappedExpr]
-  where pWrappedExpr = pThen3 (\_ e _ -> e) (pLit "(") pExpr (pLit ")")
+pExpr, pAtom, pAp, pLet, pCase, pLam :: Parser CoreExpr
+pExpr = foldl1 pAlt [pAtom, pAp, pLet, pCase, pLam]
 
 -- Exercise 1.21: Complete the parser, except for EAp (and infix ops).
-pEVar = pApply pVar EVar
-pENum = pApply pNum ENum
-pConstr = pThen3 mk_constr pPre pInd pPost
+pAtom = foldl1 pAlt [pEVar, pENum, pConstr, pWrappedExpr]
  where
+  pEVar   = pApply pVar EVar
+  pENum   = pApply pNum ENum
+  pConstr = pThen3 mk_constr pPre pInd pPost
   mk_constr _ eConstr _ = eConstr
-  pPre  = pThen undefined (pLit "Pack") (pLit "{")
-  pInd  = pThen3 (\n1 _ n2 -> EConstr n1 n2) pNum (pLit ",") pNum
-  pPost = pLit "}"
+  pPre         = pThen undefined (pLit "Pack") (pLit "{")
+  pInd         = pThen3 (\n1 _ n2 -> EConstr n1 n2) pNum (pLit ",") pNum
+  pPost        = pLit "}"
+  pWrappedExpr = pThen3 (\_ e _ -> e) (pLit "(") pExpr (pLit ")")
 pAp = pApply (pLit "mariesmiaserme") (const $ ENum 0)
 pLet = pThen4 mk_let pLetKw pDefns (pLit "in") pExpr
  where
@@ -74,3 +74,7 @@ pppp = putStrLn . iDisplay . pprProgram . parse
 
 -- Example from Exercise 1.21:
 -- pppp "f = 3; g x y = let z = x in z; h x = case (let y = x in y) of <1> -> 2; <2> -> 5"
+
+-- Exercise 1.22: Alternative <2> tends to attach to the inner case;
+-- "dangling else" question.
+-- pppp "f x y = case x of <1> -> case y of <1> -> 1; <2> -> 2"
