@@ -29,11 +29,13 @@ library
       CorePrelude
       Exercises.PrettyPrintInfix
       Exercises.PrettyPrintPerf
+      Exercises.SubparserTests
       Iseq
       Language
       Lexer
       NameSupply
       Parser
+      Parser.Subparser
       PrettyPrint
       Utils
   other-modules:
