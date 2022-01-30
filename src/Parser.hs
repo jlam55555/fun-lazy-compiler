@@ -44,7 +44,7 @@ pSc = pThen4 mk_sc pVar (pZeroOrMore pVar) pEq pExpr
 
 -- Parse an expression
 pExpr, pAtom, pAp, pLet, pCase, pLam :: Parser CoreExpr
-pExpr = foldl1 pAlt [pAtom, pAp, pLet, pCase, pLam]
+pExpr = foldl1 pAlt [pLet, pCase, pLam, pExpr1]
 
 -- Exercise 1.21: Complete the parser, except for EAp (and infix ops).
 -- Exercise 1.23: Implement mk_ap_chain for function application.
@@ -80,6 +80,38 @@ pLam = pThen4 mk_lam pBSl pArgs pDot pExpr
  where
   mk_lam _ args _ body = ELam args body
   pArgs = pOneOrMoreWithSep pVar pCom
+
+-- Helper data structure for implementing grammar with epsilon
+-- (no-op) for efficiency reasons
+data PartialExpr = NoOp | FoundOp Name CoreExpr
+
+-- Helper function for converting PartialExpr to CoreExpr
+-- for efficient infix operator parsing
+assembleOp :: CoreExpr -> PartialExpr -> CoreExpr
+assembleOp e1 NoOp            = e1
+assembleOp e1 (FoundOp op e2) = EAp (EAp (EVar op) e1) e2
+
+-- Infix operator precedence levels
+pExpr1, pExpr2, pExpr3, pExpr4, pExpr5, pExpr6 :: Parser CoreExpr
+pExpr1 = pThen assembleOp pExpr2 pExpr1c
+pExpr2 = pThen assembleOp pExpr3 pExpr2c
+pExpr3 = pThen assembleOp pExpr4 pExpr3c
+pExpr4 = pThen assembleOp pExpr5 pExpr4c
+pExpr5 = pThen assembleOp pExpr6 pExpr5c
+pExpr6 = pAp
+
+-- Infix operator precedence levels with epsilons
+pExpr1c, pExpr2c, pExpr3c, pExpr4c, pExpr5c :: Parser PartialExpr
+pExpr1c = pAlt pOr $ pEmpty NoOp where pOr = pThen FoundOp (pLit "|") pExpr1
+pExpr2c = pAlt pAnd $ pEmpty NoOp where pAnd = pThen FoundOp (pLit "&") pExpr2
+pExpr3c = pAlt pRelOp $ pEmpty NoOp
+ where
+  pRelOp = pThen FoundOp (foldl1 pAlt $ map pLit relOps) pExpr3
+  relOps = ["==", "~=", "<", "<=", ">", ">="]
+pExpr4c = pAlt pAddSub $ pEmpty NoOp
+  where pAddSub = pThen FoundOp (pAlt (pLit "+") (pLit "-")) pExpr4
+pExpr5c = pAlt pMulDiv $ pEmpty NoOp
+  where pMulDiv = pThen FoundOp (pAlt (pLit "*") (pLit "/")) pExpr5
 
 -- Utility for parse and pretty-print program
 pppp :: String -> IO ()
