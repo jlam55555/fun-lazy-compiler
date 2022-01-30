@@ -22,9 +22,14 @@ The implementation language of choice is Haskell. It is not very different from 
 The following diagram is taken from the tutorial's preface.
 ![Implementation overview][implementation_overview.png]
 
+The following diagram is Figure 1.1: the (BNF) grammar of the Core language.
+![Core language grammar][grammar.png]
+
+
 [stack]: https://docs.haskellstack.org/en/stable/README/
 [student.pdf]: https://www.microsoft.com/en-us/research/wp-content/uploads/1992/01/student.pdf
 [tutor.pdf]: https://www.microsoft.com/en-us/research/uploads/prod/1992/01/tutor.pdf
 [implementation_overview.png]: ./res/implementation_overview.png
+[grammar.png]: ./res/bnf_grammar.png
 [JOURNAL.md]: ./JOURNAL.md
 [brittany]: https://hackage.haskell.org/package/brittany
