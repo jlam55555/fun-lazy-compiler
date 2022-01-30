@@ -43,14 +43,13 @@ iFWNum width n = iStr $ space (width - length digits) ++ digits
 iLayn :: [Iseq] -> Iseq
 iLayn seqs =
   iConcat
-    $ map
-        (\(n, iseq) -> iConcat [iFWNum 4 n, iStr ") ", iIndent iseq, iNewline])
-    $ zip [1 ..] seqs
+    $   (\(n, iseq) -> iConcat [iFWNum 4 n, iStr ") ", iIndent iseq, iNewline])
+    <$> zip [1 ..] seqs
 
 -- Turn a string into an iseq.
 -- Exercise 1.7. Replace newlines with INewline
 iStr :: String -> Iseq
-iStr s = iInterleave iNewline $ map IStr $ splitOn "\n" s
+iStr s = iInterleave iNewline $ IStr <$> splitOn "\n" s
 
 -- Append two iseqs
 -- Exercise 1.5. Simplify if operand is INil

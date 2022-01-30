@@ -5,6 +5,7 @@ module PrettyPrint
   , pprExpr
   , pprDefns
   , pprDefn
+  , ppp
   ) where
 
 import           Iseq
@@ -16,7 +17,7 @@ pprint prog = iDisplay $ pprProgram prog
 
 -- Program to iseq
 pprProgram :: CoreProgram -> Iseq
-pprProgram prog = iInterleave sep (map pprScDefn prog)
+pprProgram prog = iInterleave sep $ pprScDefn <$> prog
   where sep = iConcat [iStr " ;", iNewline]
 
 -- Supercombinator to iseq
@@ -25,7 +26,7 @@ pprProgram prog = iInterleave sep (map pprScDefn prog)
 pprScDefn :: CoreScDefn -> Iseq
 pprScDefn (name, args, body) = iConcat
   [lhs, iStr " = ", iNewline, iStr "  ", iIndent $ pprExpr body]
-  where lhs = iInterleave (iStr " ") (map iStr (name : args))
+  where lhs = iInterleave (iStr " ") $ iStr <$> (name : args)
 
 data Associativity = AscLeft | AscRight | AscNone
   deriving Eq
@@ -143,7 +144,7 @@ pprExpr' _ (EConstr tag arity) = iConcat
   [iStr "Pack{ ", iStr (show tag), iStr ", ", iStr (show arity), iStr " }"]
 pprExpr' _ (ELam args body) = iConcat
   [iStr "\\ ", lhs, iStr " . ", pprExpr body]
-  where lhs = iConcat (map iStr args)
+  where lhs = iInterleave (iStr " ") $ iStr <$> args
 
 -- Mutually-recursive helper to pprExpr' that wraps the expression in
 -- parentheses if the context precedence is greater than the expression's
@@ -163,7 +164,7 @@ pprExpr'' prec wrapEqPrec e =
 
 -- Alter list to iseq
 pprAlters :: [CoreAlter] -> Iseq
-pprAlters alters = iInterleave sep (map pprAlter alters)
+pprAlters alters = iInterleave sep $ pprAlter <$> alters
   where sep = iConcat [iStr " ;", iNewline]
 
 -- Alter to iseq
@@ -171,13 +172,18 @@ pprAlter :: CoreAlter -> Iseq
 pprAlter (tag, args, body) = iConcat [lhs, iStr " -> ", pprExpr body]
  where
   tagSeq = iConcat [iStr "<", iStr (show tag), iStr ">"]
-  lhs    = iInterleave (iStr " ") (tagSeq : map iStr args)
+  lhs    = iInterleave (iStr " ") $ tagSeq : (iStr <$> args)
 
 -- Definition list to iseq
 pprDefns :: [(Name, CoreExpr)] -> Iseq
-pprDefns defns = iInterleave sep (map pprDefn defns)
+pprDefns defns = iInterleave sep $ pprDefn <$> defns
   where sep = iConcat [iStr " ;", iNewline]
 
 -- Definition to iseq
 pprDefn :: (Name, CoreExpr) -> Iseq
 pprDefn (name, expr) = iConcat [iStr name, iStr " = ", iIndent (pprExpr expr)]
+
+-- Useful helper function for Pretty-Printing Program
+-- (to stdout). Can be used in conjunction with Parser.parse.
+ppp :: CoreProgram -> IO ()
+ppp = putStrLn . iDisplay . pprProgram

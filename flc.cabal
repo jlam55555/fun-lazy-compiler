@@ -35,6 +35,7 @@ library
       Lexer
       NameSupply
       Parser
+      Parser.Core
       Parser.Subparser
       PrettyPrint
       Utils

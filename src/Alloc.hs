@@ -39,7 +39,7 @@ data InvalidHeapError = InvalidHeapError
 instance Exception InvalidHeapError
 
 hInitial :: Heap a
-hInitial = Heap (0, map Addr [1 ..], [])
+hInitial = Heap (0, Addr <$> [1 ..], [])
 
 hAlloc :: Heap a -> a -> (Heap a, Addr)
 hAlloc (Heap (_, [], _)) _ = throw InvalidHeapError
