@@ -3,17 +3,31 @@ module AllocTests
   ) where
 
 import           Alloc
+import           Control.Exception
 import           Test.HUnit
+import           TestUtil
+
+-- Heap test case
+h :: Heap String
+addr1, addr2 :: Addr
+(h, addr1, addr2) =
+  let (h1, addr1') = hAlloc hInitial "hello"
+  in  let (h2, addr2') = hAlloc h1 "world" in (h2, addr1', addr2')
 
 tests :: Test
 tests = test
-  [ "size of heap(\"hello\",\"world\")"
-  ~:  (let (h1, _) = hAlloc hInitial "hello"
-       in  let (h2, _) = hAlloc h1 "world" in hSize h2
-      )
-  ~=? 2
-  , "hIsnull hNull" ~: hIsnull hNull @? "hIsnull hNull should be true"
+  [-- hSize
+    "size of heap(\"hello\",\"world\")" ~: hSize h ~=? 2
+  , -- hIsnull
+    "hIsnull hNull" ~: hIsnull hNull @? "hIsnull hNull should be true"
   , "hIsnull non-null"
   ~: not (let (_, addr) = hAlloc hInitial (3 :: Integer) in hIsnull addr)
   @? "hIsnull is not null on a alloced address"
+  , -- error on bad lookup
+    "hLookup fail" ~: assertError "lookup on empty heap" $ evaluate $ hLookup
+    hInitial
+    2
+  , -- good lookup
+    "hLookup success" ~: hLookup h addr1 ~=? "hello"
+  , "hLookup success" ~: hLookup h addr2 ~=? "world"
   ]
