@@ -50,3 +50,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - flc
+    - HUnit == 1.6.2.0

@@ -21,7 +21,7 @@ instance Show (Heap a) where
   show h = "Heap of size " ++ show (hSize h)
 
 newtype Addr = Addr Int
-  deriving Eq
+  deriving   Eq
 
 instance Num Addr where
   (+) (Addr n1) (Addr n2) = Addr (n1 + n2)
