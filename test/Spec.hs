@@ -6,8 +6,12 @@ module Main
 
 import           AllocTests
 import           IseqTests
+import           LanguageTests
 import           Test.HUnit
 
 main :: IO Counts
-main =
-  runTestTT $ test ["Alloc" ~: AllocTests.tests, "Iseq" ~: IseqTests.tests]
+main = runTestTT $ test
+  [ "Alloc" ~: AllocTests.tests
+  , "Iseq" ~: IseqTests.tests
+  , "Language" ~: LanguageTests.tests
+  ]

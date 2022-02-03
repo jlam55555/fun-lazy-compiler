@@ -73,6 +73,7 @@ test-suite flc-test
   other-modules:
       AllocTests
       IseqTests
+      LanguageTests
       TestUtil
       Paths_flc
   hs-source-dirs:

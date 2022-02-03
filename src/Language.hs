@@ -32,7 +32,7 @@ data Expr a =
   | ELet IsRec [(a, Expr a)] (Expr a) -- Let(rec) expressions
   | ECase (Expr a) [Alter a]          -- Case expression
   | ELam [a] (Expr a)                 -- Lambda abstractions
-  deriving Show
+  deriving (Eq, Show)
 type CoreExpr = Expr Name
 
 -- Binder type
@@ -56,6 +56,7 @@ rhssOf :: [(a, b)] -> [b]
 rhssOf defns = [ rhs | (_, rhs) <- defns ]
 
 isAtomicExpr :: Expr a -> Bool
-isAtomicExpr (EVar _) = True
-isAtomicExpr (ENum _) = True
-isAtomicExpr _        = False
+isAtomicExpr (EVar _     ) = True
+isAtomicExpr (ENum _     ) = True
+isAtomicExpr (EConstr _ _) = True
+isAtomicExpr _             = False

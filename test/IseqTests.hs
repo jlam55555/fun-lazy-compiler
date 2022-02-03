@@ -54,5 +54,5 @@ tests = test
   , -- iInterleave
     "iInterleave \",\" []" ~: "" ~=? iDisplay (iInterleave (iStr ",") [])
   , "iInterleave \"\\n\" [\"hello\",\"world\"]" ~: "hello\nworld" ~=? iDisplay
-    (iInterleave (iStr ",") [iStr "hello", iStr "world"])
+    (iInterleave iNewline [iStr "hello", iStr "world"])
   ]
