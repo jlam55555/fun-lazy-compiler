@@ -1,16 +1,7 @@
 module Utils
-  ( NotImplementedError(..)
-  , mapAccuml
+  ( mapAccuml
   , space
   ) where
-
-import           Control.Exception
-
--- NotImplementedError for incomplete programs
-data NotImplementedError = NotImplementedError
-  deriving Show
-
-instance Exception NotImplementedError
 
 -- Map/fold combination
 mapAccuml :: (a -> b -> (a, c)) -> a -> [b] -> (a, [c])

@@ -17,7 +17,7 @@ pprExpr :: CoreExpr -> String
 pprExpr (ENum n   ) = show n
 pprExpr (EVar v   ) = v
 pprExpr (EAp e1 e2) = pprExpr e1 ++ " " ++ pprAExpr e2
-pprExpr _           = throw NotImplementedError
+pprExpr _           = undefined
 
 -- (Naive) pretty print atomic (place parens around expression
 -- unless it is already an atom)
