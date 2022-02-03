@@ -5,7 +5,9 @@ module Main
   ) where
 
 import           AllocTests
+import           IseqTests
 import           Test.HUnit
 
 main :: IO Counts
-main = runTestTT $ test ["Alloc" ~: AllocTests.tests]
+main =
+  runTestTT $ test ["Alloc" ~: AllocTests.tests, "Iseq" ~: IseqTests.tests]

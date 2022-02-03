@@ -85,7 +85,7 @@ flatten col ((IAppend seq1 seq2, indent) : seqs) =
   flatten col ((seq1, indent) : (seq2, indent) : seqs)
 flatten col ((IIndent iseq, _) : seqs) = flatten col ((iseq, col) : seqs)
 flatten _ ((INewline, indent) : seqs) =
-  '\n' : (space indent) ++ (flatten indent seqs)
+  '\n' : space indent ++ flatten indent seqs
 
 -- Concatenate a list of iseqs
 -- Exercise 1.2. Write in terms of iAppend and iNil
@@ -95,6 +95,6 @@ iConcat iseqList = foldl iAppend iNil iseqList
 -- Interleave an iseq between every element in a
 -- list of iseqs
 iInterleave :: Iseq -> [Iseq] -> Iseq
-iInterleave _ [] = iNil
-iInterleave delim (seqListHd : seqListTl) =
-  foldl (\acc term -> iConcat [acc, delim, term]) seqListHd seqListTl
+iInterleave _     []             = iNil
+iInterleave delim (iseq : iseqs) = foldl concat_term iseq iseqs
+  where concat_term acc term = iConcat [acc, delim, term]

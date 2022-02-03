@@ -72,6 +72,7 @@ test-suite flc-test
   main-is: Spec.hs
   other-modules:
       AllocTests
+      IseqTests
       TestUtil
       Paths_flc
   hs-source-dirs:

@@ -21,13 +21,13 @@ tests = test
   , -- hIsnull
     "hIsnull hNull" ~: hIsnull hNull @? "hIsnull hNull should be true"
   , "hIsnull non-null"
-  ~: not (let (_, addr) = hAlloc hInitial (3 :: Integer) in hIsnull addr)
+  ~: not (hIsnull addr1)
   @? "hIsnull is not null on a alloced address"
   , -- error on bad lookup
     "hLookup fail" ~: assertError "lookup on empty heap" $ evaluate $ hLookup
     hInitial
     2
   , -- good lookup
-    "hLookup success" ~: hLookup h addr1 ~=? "hello"
-  , "hLookup success" ~: hLookup h addr2 ~=? "world"
+    "hLookup success" ~: "hello" ~=? hLookup h addr1
+  , "hLookup success" ~: "world" ~=? hLookup h addr2
   ]
