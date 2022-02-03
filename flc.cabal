@@ -27,7 +27,6 @@ library
   exposed-modules:
       Alloc
       CorePrelude
-      Exercises.PrettyPrintInfix
       Exercises.PrettyPrintPerf
       Exercises.SubparserTests
       Iseq

@@ -3,6 +3,8 @@ module Parser.Core
   , pSc
   , pExpr
   , pAtom
+  , pAp
+  , pLam
   , pLet
   , pCase
   ) where

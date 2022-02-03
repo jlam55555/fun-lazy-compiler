@@ -2,7 +2,12 @@ module ParserTests
   ( tests
   ) where
 
+import           CorePrelude
+import           Parser
+import           PrettyPrint
 import           Test.HUnit
 
 tests :: Test
-tests = test ["helloworld" ~: (2 :: Integer) ~=? 4]
+tests =
+  test [ -- parse, syntax
+        "parse prelude" ~: preludeDefs ~=? (parse . pprint) preludeDefs]
