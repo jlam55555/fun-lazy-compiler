@@ -41,7 +41,7 @@ clex' ln (c : cs) | -- Newline needs to advance line num
   num_rest_cs = dropWhile isDigit cs
   var_tok     = c : takeWhile isIdChar cs
   var_rest_cs = dropWhile isIdChar cs
-  isIdChar c' = isAlpha c' || isDigit c' || c == '_'
+  isIdChar c' = isAlpha c' || isDigit c' || c' == '_'
   isTwoCharOp = cs /= [] && elem cTwoCharOp twoCharOps
   cTwoCharOp  = c : head cs : []
   twoCharOps  = ["==", "~=", ">=", "<=", "->"]
