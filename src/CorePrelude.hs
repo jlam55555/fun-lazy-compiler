@@ -25,8 +25,4 @@ preludeDefs =
     )
   , ("compose", ["f", "g", "x"], EAp (EVar "f") (EAp (EVar "g") (EVar "x")))
   , ("twice", ["f"], EAp (EAp (EVar "compose") (EVar "f")) (EVar "f"))
-  , ( "test"
-    , ["x"]
-    , ECase (EConstr 5 23) [(4, [], ELam ["y"] (EAp (EVar "x") (EVar "y")))]
-    )
   ]

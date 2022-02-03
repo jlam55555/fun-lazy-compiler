@@ -3,6 +3,8 @@ module PrettyPrint
   , pprProgram
   , pprScDefn
   , pprExpr
+  , pprAlter
+  , pprAlters
   , pprDefns
   , pprDefn
   , ppp
@@ -25,7 +27,7 @@ pprProgram prog = iInterleave sep $ pprScDefn <$> prog
 -- still looks okay even if there are no args
 pprScDefn :: CoreScDefn -> Iseq
 pprScDefn (name, args, body) = iConcat
-  [lhs, iStr " = ", iNewline, iStr "  ", iIndent $ pprExpr body]
+  [lhs, iStr " =", iNewline, iStr "  ", iIndent $ pprExpr body]
   where lhs = iInterleave (iStr " ") $ iStr <$> (name : args)
 
 data Associativity = AscLeft | AscRight | AscNone
@@ -135,7 +137,7 @@ pprExpr' _ (ELet isrec defns expr) = iConcat
 pprExpr' _ (ECase scrut alters) = iConcat
   [ iStr "case "
   , pprExpr scrut
-  , iStr " of "
+  , iStr " of"
   , iNewline
   , iStr "  "
   , iIndent $ pprAlters alters
