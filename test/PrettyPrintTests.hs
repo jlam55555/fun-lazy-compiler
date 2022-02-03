@@ -42,75 +42,71 @@ tests = test
   ~:  "\\ x y . y x"
   ~=? (iDisplay $ pprExpr $ ELam ["x", "y"] (EAp (EVar "y") (EVar "x")))
   , -- infix operators, optional parens (operator precedence and associativity)
-    "hi" ~: (2 :: Integer) ~=? 2
-  , "hi"
+    "infix precedence 1"
   ~:  "x + y < p * length xs"
   ~=? (iDisplay $ pprExpr $ EAp
         (EAp (EVar "<") (EAp (EAp (EVar "+") (EVar "x")) (EVar "y")))
         (EAp (EAp (EVar "*") (EVar "p")) (EAp (EVar "length") (EVar "xs")))
       )
-  , "hi"
+  , "infix precedence 2"
   ~:  "( x + y ) * p * length xs"
   ~=? (iDisplay $ pprExpr $ EAp
         (EAp (EVar "*") (EAp (EAp (EVar "+") (EVar "x")) (EVar "y")))
         (EAp (EAp (EVar "*") (EVar "p")) (EAp (EVar "length") (EVar "xs")))
       )
-  , "hi"
+  , "infix precedence 3"
   ~:  "( x * y ) * p * length xs"
   ~=? (iDisplay $ pprExpr $ EAp
         (EAp (EVar "*") (EAp (EAp (EVar "*") (EVar "x")) (EVar "y")))
         (EAp (EAp (EVar "*") (EVar "p")) (EAp (EVar "length") (EVar "xs")))
       )
-  , "hi"
+  , "infix precedence 4"
   ~:  "f ( x + y ) ( p * length xs )"
   ~=? (iDisplay $ pprExpr $ EAp
         (EAp (EVar "f") (EAp (EAp (EVar "+") (EVar "x")) (EVar "y")))
         (EAp (EAp (EVar "*") (EVar "p")) (EAp (EVar "length") (EVar "xs")))
       )
-  , "hi"
+  , "fn associativity 1"
   ~:  "h ( g ( f x ) )"
   ~=? (iDisplay $ pprExpr $ EAp (EVar "h")
                                 (EAp (EVar "g") (EAp (EVar "f") (EVar "x")))
       )
-  , "hi"
+  , "fn associativity 2"
   ~:  "h g f x"
   ~=? (iDisplay $ pprExpr $ EAp (EAp (EAp (EVar "h") (EVar "g")) (EVar "f"))
                                 (EVar "x")
       )
-  , "hi"
+  , "fn associativity 3"
   ~:  "h g ( f x )"
   ~=? (iDisplay $ pprExpr $ EAp (EAp (EVar "h") (EVar "g"))
                                 (EAp (EVar "f") (EVar "x"))
       )
-  , "hi"
+  , "non-associative operator"
   ~:  "( 1 - 2 ) - 3"
   ~=? (iDisplay $ pprExpr $ EAp
         (EAp (EVar "-") (EAp (EAp (EVar "-") (ENum 1)) (ENum 2)))
         (ENum 3)
       )
-  , "hi"
+  , "non-associative operator"
   ~:  "1 - ( 2 - 3 )"
   ~=? (iDisplay $ pprExpr $ EAp (EAp (EVar "-") (ENum 1))
                                 (EAp (EAp (EVar "-") (ENum 2)) (ENum 3))
       )
-  , "hi"
+  , "no parens due to associativity"
   ~:  "1 + 2 + 3"
   ~=? (iDisplay $ pprExpr $ EAp (EAp (EVar "+") (ENum 1))
                                 (EAp (EAp (EVar "+") (ENum 2)) (ENum 3))
       )
-  , "hi"
+  , "explicit parens for wrong associativity"
   ~:  "( 1 + 2 ) + 3"
   ~=? (iDisplay $ pprExpr $ EAp
         (EAp (EVar "+") (EAp (EAp (EVar "+") (ENum 1)) (ENum 2)))
         (ENum 3)
       )
-  , "hi"
+  , "infix operators as atoms"
   ~:  "( ( * ) + ( + ) ( + ) ) ( + )"
   ~=? (iDisplay $ pprExpr $ EAp
         (EAp (EAp (EVar "+") (EVar "*")) (EAp (EVar "+") (EVar "+")))
         (EVar "+")
       )
-  -- , "hi" ~: "" ~=? (iDisplay $ pprExpr $)
-  -- , "hi" ~: "" ~=? (iDisplay $ pprExpr $)
-  -- , "hi" ~: "" ~=? (iDisplay $ pprExpr $)
   ]
