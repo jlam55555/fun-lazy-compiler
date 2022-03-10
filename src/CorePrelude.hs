@@ -1,5 +1,6 @@
 module CorePrelude
   ( preludeDefs
+  , extraPreludeDefs
   ) where
 
 import           Language
@@ -26,3 +27,7 @@ preludeDefs =
   , ("compose", ["f", "g", "x"], EAp (EVar "f") (EAp (EVar "g") (EVar "x")))
   , ("twice", ["f"], EAp (EAp (EVar "compose") (EVar "f")) (EVar "f"))
   ]
+
+-- Introduced in section 2.3.4.
+extraPreludeDefs :: CoreProgram
+extraPreludeDefs = []

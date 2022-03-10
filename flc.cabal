@@ -27,6 +27,8 @@ library
   exposed-modules:
       Alloc
       CorePrelude
+      Evaluators.TemplateInstantiation.Evaluator
+      Evaluators.TemplateInstantiation.State
       Exercises.PrettyPrintPerf
       Exercises.SubparserTests
       Iseq
