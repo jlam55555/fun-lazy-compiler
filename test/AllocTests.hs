@@ -26,7 +26,7 @@ tests = test
   , -- error on bad lookup
     "hLookup fail" ~: assertError "lookup on empty heap" $ evaluate $ hLookup
     hInitial
-    2
+    hNull
   , -- good lookup
     "hLookup success" ~: "hello" ~=? hLookup h addr1
   , "hLookup success" ~: "world" ~=? hLookup h addr2

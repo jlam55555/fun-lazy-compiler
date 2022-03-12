@@ -28,7 +28,10 @@ library
       Alloc
       CorePrelude
       Evaluators.TemplateInstantiation.Evaluator
+      Evaluators.TemplateInstantiation.Node
+      Evaluators.TemplateInstantiation.PrintUtils
       Evaluators.TemplateInstantiation.State
+      Evaluators.TemplateInstantiation.Statistics
       Exercises.PrettyPrintPerf
       Exercises.SubparserTests
       Iseq

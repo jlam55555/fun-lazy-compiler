@@ -66,7 +66,7 @@ showFWAddr :: Addr -> Iseq
 showFWAddr a = iStr $ space (4 - length str) ++ str where str = show a
 
 showStats :: TiState -> Iseq
-showStats (_, _, _, _, stats) = iConcat
+showStats (_, _, h, _, stats) = iConcat
   [ iNewline
   , iStr "stats ["
   , iIndent $ iInterleave iNewline $ printStat <$> statLabelFns
@@ -74,11 +74,13 @@ showStats (_, _, _, _, stats) = iConcat
   , iNewline
   ]
  where
-  printStat (label, statFunction) =
-    iConcat [iStr $ label ++ ": ", statFunction stats]
+  printStat (label, stat) = iConcat [iStr $ label ++ ": ", iNum stat]
   statLabelFns =
-    [ ("Total number of steps"     , iNum . tiStatGetSteps)
-    , ("Primitive reductions"      , iNum . tiStatGetPrimitiveReductions)
-    , ("Supercombinator reductions", iNum . tiStatGetSupercombinatorReductions)
-    , ("Maximum stack depth"       , iNum . tiStatGetMaxStackDepth)
+    [ ("Total number of steps     ", tiStatGetSteps $ stats)
+    , ("Primitive reductions      ", tiStatGetPrimitiveReductions $ stats)
+    , ("Supercombinator reductions", tiStatGetSupercombinatorReductions $ stats)
+    , ("Maximum stack depth       ", tiStatGetMaxStackDepth $ stats)
+    , ("Heap allocs               ", hStatsGetAllocs $ h)
+    , ("Heap updates              ", hStatsGetUpdates $ h)
+    , ("Heap frees                ", hStatsGetFrees $ h)
     ]
