@@ -41,6 +41,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - fun-lazy-compiler
+    - optparse-applicative >= 0.16 && <= 0.17
 
 tests:
   fun-lazy-compiler-test:
