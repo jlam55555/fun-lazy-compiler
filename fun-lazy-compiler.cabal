@@ -4,24 +4,25 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           flc
+name:           fun-lazy-compiler
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/flc#readme>
-homepage:       https://github.com/githubuser/flc#readme
-bug-reports:    https://github.com/githubuser/flc/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2022 Author name here
+description:    Please see the README on GitHub at <https://github.com/jlam55555/fun-lazy-compiler#readme>
+homepage:       https://github.com/jlam55555/fun-lazy-compiler#readme
+bug-reports:    https://github.com/jlam55555/fun-lazy-compiler/issues
+author:         Jonathan Lam
+maintainer:     jlam55555@gmail.com
+copyright:      2022 Jonathan Lam
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
+    JOURNAL.md
     ChangeLog.md
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/flc
+  location: https://github.com/jlam55555/fun-lazy-compiler
 
 library
   exposed-modules:
@@ -44,7 +45,7 @@ library
       PrettyPrint
       Utils
   other-modules:
-      Paths_flc
+      Paths_fun_lazy_compiler
   hs-source-dirs:
       src
   build-depends:
@@ -55,23 +56,23 @@ library
     , split ==0.2.3.4
   default-language: Haskell2010
 
-executable flc-exe
+executable fun-lazy-compiler-exe
   main-is: Main.hs
   other-modules:
-      Paths_flc
+      Paths_fun_lazy_compiler
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , containers ==0.6.5.1
-    , flc
+    , fun-lazy-compiler
     , hxt ==9.3.1.22
     , sort ==1.0.0.0
     , split ==0.2.3.4
   default-language: Haskell2010
 
-test-suite flc-test
+test-suite fun-lazy-compiler-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
@@ -87,15 +88,15 @@ test-suite flc-test
       PrettyPrintTests
       TestUtil
       UtilsTests
-      Paths_flc
+      Paths_fun_lazy_compiler
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HUnit ==1.6.2.0
     , base >=4.7 && <5
     , containers ==0.6.5.1
-    , flc
+    , fun-lazy-compiler
     , hxt ==9.3.1.22
     , sort ==1.0.0.0
     , split ==0.2.3.4

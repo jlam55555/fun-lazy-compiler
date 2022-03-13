@@ -1,13 +1,14 @@
-name:                flc
+name:                fun-lazy-compiler
 version:             0.1.0.0
-github:              "githubuser/flc"
+github:              "jlam55555/fun-lazy-compiler"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2022 Author name here"
+author:              "Jonathan Lam"
+maintainer:          "jlam55555@gmail.com"
+copyright:           "2022 Jonathan Lam"
 
 extra-source-files:
 - README.md
+- JOURNAL.md
 - ChangeLog.md
 
 # Metadata used when publishing your package
@@ -17,7 +18,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/flc#readme>
+description:         Please see the README on GitHub at <https://github.com/jlam55555/fun-lazy-compiler#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -30,24 +31,26 @@ library:
   source-dirs: src
 
 executables:
-  flc-exe:
+  fun-lazy-compiler-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
+    - -Wall
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - flc
+    - fun-lazy-compiler
 
 tests:
-  flc-test:
+  fun-lazy-compiler-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
+    - -Wall
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - flc
+    - fun-lazy-compiler
     - HUnit == 1.6.2.0
