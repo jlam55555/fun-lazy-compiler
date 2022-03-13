@@ -113,18 +113,16 @@ scStep (s, d, h, e, stats) _ argNames body = (s', d, h', e, stats)
  where
   -- stack update: remove sc and args from stack, replace node
   -- (currently no node update, only replacement)
-  s'           = resultAddr : s''
-  (root : s'') = if length s < argsToDrop
+  root : _ = s'
+  s'       = if length s < argsToDrop
     then error "scStep: not enough arguments for application"
     else drop (argsToDrop - 1) s
-  argsToDrop        = length argNames + 1
-  (h'', resultAddr) = instantiate body h e'
+  argsToDrop  = length argNames + 1
+  h'          = instantiateAndUpdate body root h e'
   -- Exercise 2.8: order matters here; if it were reversed, the
   -- outside environment would override the new bindings
-  e'                = argBindings ++ e
-  argBindings       = zip argNames $ getArgs h s
-  -- Exercise 2.13: update the root of the heap
-  h'                = hUpdate h'' root $ NInd resultAddr
+  e'          = argBindings ++ e
+  argBindings = zip argNames $ getArgs h s
 
 -- Indirection node: equation 2.4; the indirection node gets
 -- replaced with the address on the stack.
@@ -146,10 +144,10 @@ type TiInst = TiHeap -> TiEnv -> (TiHeap, Addr)
 
 instantiate :: CoreExpr -> TiInst
 instantiate (ENum n   ) h _ = hAlloc h (NNum n)
-instantiate (EAp e1 e2) h e = hAlloc h2 (NAp a1 a2)
+instantiate (EAp e1 e2) h e = hAlloc h'' (NAp a1 a2)
  where
-  (h1, a1) = instantiate e1 h e
-  (h2, a2) = instantiate e2 h1 e
+  (h' , a1) = instantiate e1 h e
+  (h'', a2) = instantiate e2 h' e
 instantiate (EVar v) h e =
   (h, lookupDef (error $ "instantiate: unbound var " ++ show v) v e)
 instantiate (EConstr tag arity) h e = instantiateConstr tag arity h e
@@ -177,3 +175,52 @@ instantiateLet isRec bindings body h e = instantiate body h' e'
 -- Exercise 2.12: The given program cannot exist in a strongly-typed language
 -- since the binding `f = f x` is not well-typed (similar to how the Y-combinator
 -- cannot be well-typed).
+
+-- Exercise 2.14: Implement `instantiateAndUpdate`, used for the root of an
+-- instantiation -- doesn't need to allocate a new node, since the application node
+-- can be reused. (Recursive nodes do have to be allocated.) The second argument
+-- is the address of the node to update
+type TiUpdInst = Addr -> TiHeap -> TiEnv -> TiHeap
+
+instantiateAndUpdate :: CoreExpr -> TiUpdInst
+instantiateAndUpdate (ENum n   ) updAddr h _ = hUpdate h updAddr (NNum n)
+instantiateAndUpdate (EAp e1 e2) updAddr h e = hUpdate h'' updAddr (NAp a1 a2)
+ where
+  (h' , a1) = instantiate e1 h e
+  (h'', a2) = instantiate e2 h' e
+-- Exercise 2.14: For `EVar`, we need to have an indirection because the
+-- variable's address may be updated at some point.
+instantiateAndUpdate (EVar v) updAddr h e = hUpdate h updAddr $ NInd a
+  where a = lookupDef (error $ "instantiate: unbound var " ++ show v) v e
+instantiateAndUpdate (EConstr tag arity) updAddr h e =
+  instantiateAndUpdateConstr tag arity updAddr h e
+instantiateAndUpdate (ELet isRec bindings body) updAddr h e =
+  instantiateAndUpdateLet isRec bindings body updAddr h e
+instantiateAndUpdate (ECase _ _) _ _ _ =
+  error "instantiateAndUpdate: can't instantiate case"
+instantiateAndUpdate (ELam _ _) _ _ _ =
+  error "instantiateAndUpdate: can't instantiate lambda fns"
+
+instantiateAndUpdateConstr :: Int -> Int -> TiUpdInst
+instantiateAndUpdateConstr =
+  error "instantiateAndUpdate: can't instantiate constructors"
+
+-- Exercise 2.14: Note: we need to be careful to recursively call
+-- `instantiateAndUpdate` on the body expression but `instantiate` on the
+-- bindings expressions to avoid extra indirections
+instantiateAndUpdateLet :: IsRec -> [(Name, CoreExpr)] -> CoreExpr -> TiUpdInst
+instantiateAndUpdateLet isRec bindings body updAddr h e = instantiateAndUpdate
+  body
+  updAddr
+  h'
+  e'
+ where
+  -- Augmented environment to evaluate body (and bindings in letrec)
+  e'             = zip (bindersOf bindings) rhsAddrs ++ e
+  (h', rhsAddrs) = mapAccuml instantiateBinding h $ rhssOf bindings
+  instantiateBinding h'' body' = instantiate body' h'' e''
+   where
+    e'' | -- letrec: use augmented environment for bindings
+          isRec == recursive = e'
+        | -- let: use previous environment for bindings
+          otherwise          = e

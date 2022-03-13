@@ -7,7 +7,7 @@ import           Test.HUnit
 import           Evaluators.TemplateInstantiation.Evaluator
 import           Evaluators.TemplateInstantiation.Node
 
-progSKK3, progLet, progLetSc, progLetRec :: String
+progSKK3, progLet, progLetSc, progLetRec, progInd :: String
 
 -- Exercise 2.4
 progSKK3 = "main = S K K 3"
@@ -26,10 +26,13 @@ progLetRec =
   \        in fst (snd (snd (snd a))) ;\
   \main = f 5 6"
 
+progInd = "main = twice twice I 7"
+
 tests :: Test
 tests = test
   [ "exercise 2.4" ~: getResult progSKK3 ~=? NNum 3
   , "let example 1" ~: getResult progLet ~=? NNum 4
   , "let example 2" ~: getResult progLetSc ~=? NNum 5
   , "letrec" ~: getResult progLetRec ~=? NNum 6
+  , "indirections" ~: getResult progInd ~=? NNum 7
   ]
