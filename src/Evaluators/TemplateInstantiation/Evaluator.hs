@@ -94,6 +94,7 @@ step state = dispatch $ hLookup h $ head s
   dispatch (NNum n                 ) = numStep state n
   dispatch (NAp a1 a2              ) = apStep state a1 a2
   dispatch (NSupercomb sc args body) = scStep state sc args body
+  dispatch (NInd a                 ) = indStep state a
 
 -- Number should not be on the stack spine
 numStep :: TiState -> Int -> TiState
@@ -112,16 +113,24 @@ scStep (s, d, h, e, stats) _ argNames body = (s', d, h', e, stats)
  where
   -- stack update: remove sc and args from stack, replace node
   -- (currently no node update, only replacement)
-  s'        = resultAddr : prevStack
-  prevStack = if length s < argsToDrop
+  s'           = resultAddr : s''
+  (root : s'') = if length s < argsToDrop
     then error "scStep: not enough arguments for application"
-    else drop argsToDrop s
-  argsToDrop       = length argNames + 1
-  (h', resultAddr) = instantiate body h env
+    else drop (argsToDrop - 1) s
+  argsToDrop        = length argNames + 1
+  (h'', resultAddr) = instantiate body h e'
   -- Exercise 2.8: order matters here; if it were reversed, the
   -- outside environment would override the new bindings
-  env              = argBindings ++ e
-  argBindings      = zip argNames $ getArgs h s
+  e'                = argBindings ++ e
+  argBindings       = zip argNames $ getArgs h s
+  -- Exercise 2.13: update the root of the heap
+  h'                = hUpdate h'' root $ NInd resultAddr
+
+-- Indirection node: equation 2.4; the indirection node gets
+-- replaced with the address on the stack.
+-- Exercise 2.13: Implement indirection nodes.
+indStep :: TiState -> Addr -> TiState
+indStep (s, d, h, e, stats) a = (a : tail s, d, h, e, stats)
 
 -- Looks up all the arguments (names) for NAp nodes on the spine
 getArgs :: TiHeap -> TiStack -> [Addr]

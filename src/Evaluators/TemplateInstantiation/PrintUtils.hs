@@ -57,6 +57,7 @@ showNode (NAp a1 a2) =
   iConcat [iStr "NAp ", showAddr a1, iStr " ", showAddr a2]
 showNode (NSupercomb name _ _) = iStr $ "NSupercomb " ++ name
 showNode (NNum n             ) = iStr "NNum " `iAppend` iNum n
+showNode (NInd a             ) = iStr "NInd " `iAppend` showAddr a
 
 showAddr :: Addr -> Iseq
 showAddr a = iStr $ show a
