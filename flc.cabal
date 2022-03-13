@@ -76,6 +76,7 @@ test-suite flc-test
   main-is: Spec.hs
   other-modules:
       AllocTests
+      Evaluators.TemplateInstantiation.EvaluatorTests
       IseqTests
       LanguageTests
       LexerTests

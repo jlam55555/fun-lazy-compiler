@@ -7,6 +7,7 @@ module Main
 import           Test.HUnit
 
 import           AllocTests
+import           Evaluators.TemplateInstantiation.EvaluatorTests
 import           IseqTests
 import           LanguageTests
 import           LexerTests
@@ -20,6 +21,8 @@ import           UtilsTests
 main :: IO Counts
 main = runTestTT $ test
   [ "Alloc" ~: AllocTests.tests
+  , "Evaluators.TemplateInstantiation.EvaluatorTests"
+    ~: Evaluators.TemplateInstantiation.EvaluatorTests.tests
   , "Iseq" ~: IseqTests.tests
   , "Language" ~: LanguageTests.tests
   , "Lexer" ~: LexerTests.tests

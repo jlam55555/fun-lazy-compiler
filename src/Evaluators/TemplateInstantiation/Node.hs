@@ -9,3 +9,4 @@ import           Language
 data Node = NAp Addr Addr                   -- Application
           | NSupercomb Name [Name] CoreExpr -- Supercombinator
           | NNum Int                        -- Number
+  deriving (Eq, Show)

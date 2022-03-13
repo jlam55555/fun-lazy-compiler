@@ -1,5 +1,6 @@
 module Evaluators.TemplateInstantiation.Evaluator
   ( runProg
+  , getResult
   , compile
   , eval
   , showResults
@@ -18,9 +19,17 @@ import           Evaluators.TemplateInstantiation.PrintUtils
 import           Evaluators.TemplateInstantiation.State
 import           Evaluators.TemplateInstantiation.Statistics
 
--- Driver for the graph reduction implementation
+-- Driver for the graph reduction implementation;
+-- runs program and shows result
 runProg :: String -> String
 runProg = showResults . eval . compile . parse
+
+-- Get result of running program
+getResult :: String -> Node
+getResult prog = hLookup h s
+ where
+  ([s], _, h, _, _) = last states
+  states            = eval . compile . parse $ prog
 
 -- Translate the program into a form suitable for execution
 compile :: CoreProgram -> TiState
@@ -122,6 +131,8 @@ getArgs h (_ : s) = map getArg s
 
 -- Instantiate a supercombinator. Takes a sc, heap, and
 -- environment (globals + args bindings).
+-- (Instantiation is essentially substitution of the environment to
+-- evaluate an expression, such as the body of a supercombinator or `let`.)
 type TiInst = TiHeap -> TiEnv -> (TiHeap, Addr)
 
 instantiate :: CoreExpr -> TiInst
@@ -140,5 +151,20 @@ instantiate (ELam _ _) _ _ = error "instantiate: can't instantiate lambda fns"
 instantiateConstr :: Int -> Int -> TiInst
 instantiateConstr _ _ _ _ = error "instantiate: can't instantiate constructors"
 
+-- Exercise 2.10, 2.11: Implement let(rec)
 instantiateLet :: IsRec -> [(Name, CoreExpr)] -> CoreExpr -> TiInst
-instantiateLet _ _ _ _ _ = error "instantiate: can't instantiate let(rec)"
+instantiateLet isRec bindings body h e = instantiate body h' e'
+ where
+  -- Augmented environment to evaluate body (and bindings in letrec)
+  e'             = zip (bindersOf bindings) rhsAddrs ++ e
+  (h', rhsAddrs) = mapAccuml instantiateBinding h $ rhssOf bindings
+  instantiateBinding h'' body' = instantiate body' h'' e''
+   where
+    e'' | -- letrec: use augmented environment for bindings
+          isRec == recursive = e'
+        | -- let: use previous environment for bindings
+          otherwise          = e
+
+-- Exercise 2.12: The given program cannot exist in a strongly-typed language
+-- since the binding `f = f x` is not well-typed (similar to how the Y-combinator
+-- cannot be well-typed).
