@@ -157,9 +157,14 @@ indStep :: TiState -> Addr -> TiState
 indStep (s, d, h, e, stats) a = (a : tail s, d, h, e, stats)
 
 -- Primitives, introduced in Mark 4
+-- Exercise 2.16: unary negation operator
+-- Exercise 2.17: binary arithmetic operators (+, -, *, /)
 primStep :: TiState -> Primitive -> TiState
 primStep state Neg = primNeg state
-primStep _     _   = undefined
+primStep state Add = primArith state (+)
+primStep state Sub = primArith state (-)
+primStep state Mul = primArith state (*)
+primStep state Div = primArith state div
 
 -- Exercise 2.16: evaluation of `negate` (the only unary primitive)
 primNeg :: TiState -> TiState
@@ -174,7 +179,7 @@ primNeg (s, d, h, e, stats) = state'
   -- Stack, heap, and n if argument is already evaluated
   s'@[rootAddr] = tail s
   h'            = hUpdate h rootAddr $ NNum $ -n
-  (NNum n)      = arg
+  NNum n        = arg
   -- Stack and dump if argument is not evaluated
   s''           = argAddrs
   d'            = s' : d
@@ -186,11 +191,36 @@ primNeg (s, d, h, e, stats) = state'
     getArg [argAddr] = argAddr
     getArg _         = error "primNeg: wrong number of arguments to `negate`"
 
+-- Exercise 2.17: evaluation of binary primitive operators
+primArith :: TiState -> (Int -> Int -> Int) -> TiState
+primArith (s, d, h, e, stats) fn = state' where
+  state' | isDataNode arg1 && isDataNode arg2 = (s', d, h', e, stats)
+         | otherwise                          = (s''', d', h, e, stats)
+  -- Stack, heap, and ns if arguments are already evaluated
+  [_, _, rootAddr]      = s
+  s'                    = [rootAddr]
+  h'                    = hUpdate h rootAddr $ NNum $ fn n1 n2
+  NNum n1               = arg1
+  NNum n2               = arg2
+  -- Stack and dump if either argument is not evaluated;
+  -- Note: both arguments are re-evaluated, even if one is already
+  -- evaluated; this simplifies the implementation a little bit
+  s''                   = [a1]
+  s'''                  = [a2]
+  d'                    = s'' : s' : d
+  -- Get both arguments
+  argAddrs@[a1  , a2  ] = getArgs h s
+  [         arg1, arg2] = map (hLookup h) $ getTwoArgs argAddrs
+   where
+    getTwoArgs args@[_, _] = args
+    getTwoArgs _ =
+      error "primArith: wrong number of arguments to binary primitive"
+
 -- Looks up all the arguments (names) for NAp nodes on the spine
 getArgs :: TiHeap -> TiStack -> [Addr]
 getArgs _ []      = error "getArgs: empty stack"
 getArgs h (_ : s) = map getArg s
-  where getArg a = arg where (NAp _ arg) = hLookup h a
+  where getArg a = arg where NAp _ arg = hLookup h a
 
 -- Instantiate a supercombinator. Takes a sc, heap, and
 -- environment (globals + args bindings).
