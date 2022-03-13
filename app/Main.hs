@@ -2,39 +2,31 @@ module Main
   ( main
   ) where
 
-import           Data.Semigroup                 ( (<>) )
 import           Options.Applicative
+import           System.IO
 
-data Sample = Sample
-  { hello      :: String
-  , quiet      :: Bool
-  , enthusiasm :: Int
-  }
+data FLCConfig = FLCConfig String
 
-sample :: Parser Sample
-sample =
-  Sample
-    <$> strOption
-          (long "hello" <> metavar "TARGET" <> help "Target for the greeting")
-    <*> switch (long "quiet" <> short 'q' <> help "Whether to be quiet")
-    <*> option
-          auto
-          (  long "enthusiasm"
-          <> help "How enthusiastically to greet"
-          <> showDefault
-          <> value 1
-          <> metavar "INT"
-          )
+flcConfig :: Parser FLCConfig
+flcConfig = FLCConfig <$> argument str (metavar "FILE")
 
 main :: IO ()
-main = greet =<< execParser opts
+main = main' =<< execParser opts
  where
   opts = info
-    (sample <**> helper)
-    (fullDesc <> progDesc "Print a greeting for TARGET" <> header
-      "hello - a test for optparse-applicative"
+    (flcConfig <**> helper)
+    (  fullDesc
+    <> progDesc "Compile and evaluate a program in the Core language"
+    <> header
+         "fun-lazy-compiler -- a compiler and runtime for the Core lazy functional language"
     )
 
-greet :: Sample -> IO ()
-greet (Sample h False n) = putStrLn $ "Hello, " ++ h ++ replicate n '!'
-greet _                  = return ()
+main' :: FLCConfig -> IO ()
+main' (FLCConfig file) = do
+  sourceFileContents <- readSourceFile file
+  putStrLn $ "Got file contents: " ++ sourceFileContents
+
+-- Read a source file, or stdin if `-` is specified
+readSourceFile :: String -> IO String
+readSourceFile "-" = hGetContents stdin
+readSourceFile s   = readFile s
