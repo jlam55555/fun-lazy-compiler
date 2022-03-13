@@ -28,6 +28,8 @@ runProg = showResults . eval . compile . parse
 getResult :: String -> Node
 getResult prog = hLookup h s
  where
+  -- Non-exhaustive pattern should not fail because `eval` should always
+  -- return a singleton stack (the single element containing the result)
   ([s], _, h, _, _) = last states
   states            = eval . compile . parse $ prog
 
@@ -44,12 +46,23 @@ compile program =
 
 -- Initial heap comprises an address for each supercombinator
 buildInitialHeap :: CoreProgram -> (TiHeap, TiEnv)
-buildInitialHeap scDefs = mapAccuml allocateSc hInitial scDefs
+buildInitialHeap scDefs = (h', scAddrs ++ primAddrs)
+ where
+  (h , scAddrs  ) = mapAccuml allocateSc hInitial scDefs
+  (h', primAddrs) = mapAccuml allocatePrim h primitives
 
--- Add a supercombinator to the heap
+-- Add a builtin supercombinator to the heap
 allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))
 allocateSc h (name, args, body) = (h', (name, a))
   where (h', a) = hAlloc h $ NSupercomb name args body
+
+-- Add primitives to the heap
+primitives :: AssocList Name Primitive
+primitives = [("negate", Neg), ("+", Add), ("-", Sub), ("*", Mul), ("/", Div)]
+
+allocatePrim :: TiHeap -> (Name, Primitive) -> (TiHeap, (Name, Addr))
+allocatePrim h (name, prim) = (h', (name, a))
+  where (h', a) = hAlloc h $ NPrim name prim
 
 -- Execute the program by performing repeated state transitions
 -- until a final state is reached. The result is the list of all
@@ -65,10 +78,12 @@ eval state = state : restStates
   nextState = (doAdmin . step) state
 
 -- Test if a state is final
+-- Exercise 2.16: not final if the dump is empty
 tiFinal :: TiState -> Bool
-tiFinal ([soleAddr], _, h, _, _) = isDataNode $ hLookup h soleAddr
-tiFinal ([]        , _, _, _, _) = error "tiFinal: empty stack"
-tiFinal _                        = False -- stack contains more than one element
+tiFinal ([soleAddr], [], h, _, _) = isDataNode $ hLookup h soleAddr
+tiFinal ([]        , _ , _, _, _) = error "tiFinal: empty stack"
+tiFinal _ = -- stack contains more than one element or the dump is not empty
+  False
 
 -- Check if a Node is a data object rather than a redex
 -- (supercombinator or application)
@@ -95,14 +110,26 @@ step state = dispatch $ hLookup h $ head s
   dispatch (NAp a1 a2              ) = apStep state a1 a2
   dispatch (NSupercomb sc args body) = scStep state sc args body
   dispatch (NInd a                 ) = indStep state a
+  dispatch (NPrim _ prim           ) = primStep state prim
 
--- Number should not be on the stack spine
+-- Number may only appear on the stack spine if the current
+-- stack is final; in Mark 4, this will further evaluate if the
+-- dump is not empty
+-- Exercise 2.16: Change this to implement Equation 2.7
 numStep :: TiState -> Int -> TiState
+numStep ([_], s : d, h, e, stats) _ = (s, d, h, e, stats)
 numStep _ _ = error "numStep: number applied as function"
 
 -- Step when an application node is reached: add the function to the spine
+-- Exercise 2.16: updated to implement Equation 2.8
 apStep :: TiState -> Addr -> Addr -> TiState
-apStep (s, d, h, e, stats) a1 _ = (a1 : s, d, h, e, stats)
+apStep (s, d, h, e, stats) a1 a2 = nextState $ hLookup h a2
+ where
+  nextState (NInd a2') = (s, d, h', e, stats)
+   where
+    h'    = hUpdate h a $ NAp a1 a2'
+    a : _ = s
+  nextState _ = (a1 : s, d, h, e, stats)
 
 -- Step when a supercombinator node is reached: unwind the stack
 -- and instantiate the sc with the environment (globals + args)
@@ -112,13 +139,12 @@ scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
 scStep (s, d, h, e, stats) _ argNames body = (s', d, h', e, stats)
  where
   -- stack update: remove sc and args from stack, replace node
-  -- (currently no node update, only replacement)
-  root : _ = s'
-  s'       = if length s < argsToDrop
-    then error "scStep: not enough arguments for application"
-    else drop (argsToDrop - 1) s
-  argsToDrop  = length argNames + 1
-  h'          = instantiateAndUpdate body root h e'
+  s'@(rootAddr : _) = checkArgCount $ drop argsToDrop s
+   where
+    checkArgCount s''@(_ : _) = s''
+    checkArgCount _ = error "scStep: not enough arguments for application"
+  argsToDrop  = length argNames
+  h'          = instantiateAndUpdate body rootAddr h e'
   -- Exercise 2.8: order matters here; if it were reversed, the
   -- outside environment would override the new bindings
   e'          = argBindings ++ e
@@ -129,6 +155,36 @@ scStep (s, d, h, e, stats) _ argNames body = (s', d, h', e, stats)
 -- Exercise 2.13: Implement indirection nodes.
 indStep :: TiState -> Addr -> TiState
 indStep (s, d, h, e, stats) a = (a : tail s, d, h, e, stats)
+
+-- Primitives, introduced in Mark 4
+primStep :: TiState -> Primitive -> TiState
+primStep state Neg = primNeg state
+primStep _     _   = undefined
+
+-- Exercise 2.16: evaluation of `negate` (the only unary primitive)
+primNeg :: TiState -> TiState
+primNeg (s, d, h, e, stats) = state'
+ where
+  -- Non-exhaustive pattern match; if there are not enough arguments, it would
+  -- be caught by the `getArg` matching below
+  state' | -- Equation 2.5: Argument is already evaluated
+           isDataNode arg = (s', d, h', e, stats)
+         | -- Equation 2.9: Create new stack, push old one onto the dump
+           otherwise      = (s'', d', h, e, stats)
+  -- Stack, heap, and n if argument is already evaluated
+  s'@[rootAddr] = tail s
+  h'            = hUpdate h rootAddr $ NNum $ -n
+  (NNum n)      = arg
+  -- Stack and dump if argument is not evaluated
+  s''           = argAddrs
+  d'            = s' : d
+  -- Get singular argument
+  argAddrs      = getArgs h s
+  arg           = hLookup h $ getArg argAddrs
+   where
+    -- Rule 2.5: there should only be a single argument
+    getArg [argAddr] = argAddr
+    getArg _         = error "primNeg: wrong number of arguments to `negate`"
 
 -- Looks up all the arguments (names) for NAp nodes on the spine
 getArgs :: TiHeap -> TiStack -> [Addr]

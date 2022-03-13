@@ -18,10 +18,10 @@ import           Language
 type TiStack = [Addr]
 
 -- Dump of stacks
-data TiDump = DummyTiDump
+type TiDump = [TiStack]
 
 initialTiDump :: TiDump
-initialTiDump = DummyTiDump
+initialTiDump = []
 
 -- Address space
 type TiHeap = Heap Node

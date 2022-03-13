@@ -33,9 +33,12 @@ tiStatGetSteps (steps, _, _, _) = steps
 
 -- Node is the next node on the stack, which indicates the next
 -- evaluation step (which may or may not be a reduction)
--- TODO: implement this for primitive nodes when we introduce
--- primitives in Mark 4
+-- Exercise 2.16: updated to count primitives; note that primitive
+-- reductions may be double-counted if the arguments are not
+-- evaluated due to Equation 2.9
 tiStatUpdateReductions :: Node -> TiStats -> TiStats
+tiStatUpdateReductions (NPrim _ _) (steps, pr, sr, msd) =
+  (steps, pr + 1, sr, msd)
 tiStatUpdateReductions (NSupercomb _ _ _) (steps, pr, sr, msd) =
   (steps, pr, sr + 1, msd)
 tiStatUpdateReductions _ stats = stats
