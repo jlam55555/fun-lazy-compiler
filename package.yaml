@@ -31,7 +31,7 @@ library:
   source-dirs: src
 
 executables:
-  fun-lazy-compiler-exe:
+  flc:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

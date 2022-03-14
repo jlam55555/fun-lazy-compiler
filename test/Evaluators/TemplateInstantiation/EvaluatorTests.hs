@@ -5,11 +5,10 @@ module Evaluators.TemplateInstantiation.EvaluatorTests
 import           Test.HUnit
 
 import           Evaluators.TemplateInstantiation.Evaluator
-import           Evaluators.TemplateInstantiation.Node
 
 progSKK3, progLet, progLetSc, progLetRec, progInd :: String
 progNeg1, progNeg2, progNeg3, progArith1, progArith2 :: String
-progChurch, progCons :: String
+progChurch, progCons, progInfinite1, progInfinite2, progInfinite3 :: String
 
 -- Exercise 2.4
 progSKK3 = "main = S K K 3"
@@ -69,7 +68,7 @@ consDef =
 progCons = consDef ++ "main = let lst = cons 1 (cons 2 3) in cadr lst"
 
 -- Infinite list/stream!
-progInfinite = consDef ++ "main = letrec ones = cons 1 ones in getTenth ones"
+progInfinite1 = consDef ++ "main = letrec ones = cons 1 ones in getTenth ones"
 progInfinite2 =
   consDef
     ++ "numsFrom x = cons x (numsFrom (x + 1)) ;\
@@ -83,20 +82,21 @@ progInfinite3 =
 
 tests :: Test
 tests = test
-  [ "exercise 2.4" ~: getResult progSKK3 ~=? NNum 3
-  , "let example 1" ~: getResult progLet ~=? NNum 4
-  , "let example 2" ~: getResult progLetSc ~=? NNum 5
-  , "letrec" ~: getResult progLetRec ~=? NNum 6
-  , "indirections" ~: getResult progInd ~=? NNum 7
-  , "unary primitive (`negate`) w/o dump" ~: getResult progNeg1 ~=? NNum (-3)
-  , "unary primitive (`negate`) w/ dump" ~: getResult progNeg2 ~=? NNum 3
-  , "unary primitive (`negate`) w/ indirection" ~: getResult progNeg3 ~=? NNum
-    (-3)
-  , "binary primitive" ~: getResult progArith1 ~=? NNum 101
-  , "binary primitive 2" ~: getResult progArith2 ~=? NNum (-3)
-  , "church" ~: getResult progChurch ~=? NNum 4
-  , "cons" ~: getResult progCons ~=? NNum 2
-  , "infinite streams (ones)" ~: getResult progInfinite ~=? NNum 1
-  , "infinite streams (nats)" ~: getResult progInfinite2 ~=? NNum 9
-  , "infinite streams (fibs)" ~: getResult progInfinite3 ~=? NNum 34
+  [ "exercise 2.4" ~: runGetResult progSKK3 ~=? 3
+  , "let example 1" ~: runGetResult progLet ~=? 4
+  , "let example 2" ~: runGetResult progLetSc ~=? 5
+  , "letrec" ~: runGetResult progLetRec ~=? 6
+  , "indirections" ~: runGetResult progInd ~=? 7
+  , "unary primitive (`negate`) w/o dump" ~: runGetResult progNeg1 ~=? (-3)
+  , "unary primitive (`negate`) w/ dump" ~: runGetResult progNeg2 ~=? 3
+  , "unary primitive (`negate`) w/ indirection"
+  ~:  runGetResult progNeg3
+  ~=? (-3)
+  , "binary primitive" ~: runGetResult progArith1 ~=? 101
+  , "binary primitive 2" ~: runGetResult progArith2 ~=? (-3)
+  , "church" ~: runGetResult progChurch ~=? 4
+  , "cons" ~: runGetResult progCons ~=? 2
+  , "infinite streams (ones)" ~: runGetResult progInfinite1 ~=? 1
+  , "infinite streams (nats)" ~: runGetResult progInfinite2 ~=? 9
+  , "infinite streams (fibs)" ~: runGetResult progInfinite3 ~=? 34
   ]

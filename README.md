@@ -1,4 +1,4 @@
-# fun-lazy-compiler (flc)
+# Fun Lazy Compiler (flc)
 A (simulated) compiler for a lazy functional language, following the tutorial by Simon Peyton Jones
 
 See tutorial (for [students][student.pdf]; for [tutors][tutor.pdf])
@@ -6,9 +6,17 @@ See tutorial (for [students][student.pdf]; for [tutors][tutor.pdf])
 ### Build instructions
 This project uses the Haskell [Stack][stack] build environment. To build or run tests:
 ```bash
-$ stack build
-$ stack run
-$ stack test
+$ stack build       # build compiler binary
+$ stack run -- FILE # run compiler binary
+$ stack test        # run unit tests
+```
+
+You may also install the binary to your path, like so:
+
+```bash
+$ stack install     # install to PATH (e.g., `~/.local/bin`)
+$ flc FILE          # run compiler binary
+$ make uninstall    # uninstall from PATH
 ```
 
 All Haskell code is auto-formatted using the [brittany][brittany] formatter.
