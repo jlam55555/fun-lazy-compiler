@@ -48,9 +48,10 @@ compile :: CoreProgram -> TiState
 compile program =
   (initialStack, initialTiDump, initialHeap, globalEnv, tiStatInitial)
  where
-  scDefs                   = program ++ preludeDefs ++ extraPreludeDefs
+  -- `program` is reversed so that later definitions override earlier ones
+  scDefs = (reverse program) ++ preludeDefs ++ extraPreludeDefs
   (initialHeap, globalEnv) = buildInitialHeap scDefs
-  initialStack             = [addressOfMain]
+  initialStack = [addressOfMain]
   addressOfMain =
     lookupDef (error "compile: main is not defined") "main" globalEnv
 
