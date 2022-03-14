@@ -19,7 +19,7 @@ install:
 uninstall:
 	# Remove installation (e.g., from `~/.local/bin`)
 	stack exec ghc-pkg unregister ${PKG}
-	rm -f $$(whereis ${BINARY} | awk '{print $$2}')
+	rm -f $(shell whereis ${BINARY} | awk '{print $$2}')
 
 clean:
 	stack clean
