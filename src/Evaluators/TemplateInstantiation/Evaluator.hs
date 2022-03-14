@@ -1,5 +1,7 @@
 module Evaluators.TemplateInstantiation.Evaluator
-  ( runProg
+  ( run
+  , runShowResult
+  , runGetResult
   , getResult
   , compile
   , eval
@@ -19,19 +21,27 @@ import           Evaluators.TemplateInstantiation.PrintUtils
 import           Evaluators.TemplateInstantiation.State
 import           Evaluators.TemplateInstantiation.Statistics
 
+-- Simply run program
+run :: String -> [TiState]
+run = eval . compile . parse
+
 -- Driver for the graph reduction implementation;
 -- runs program and shows result
-runProg :: String -> String
-runProg = showResults . eval . compile . parse
+runShowResult :: String -> String
+runShowResult = showResults . run
 
--- Get result of running program
-getResult :: String -> Node
-getResult prog = hLookup h s
+-- Get numeric result from program result
+getResult :: [TiState] -> Int
+getResult states = n
  where
+  NNum n            = hLookup h s
   -- Non-exhaustive pattern should not fail because `eval` should always
   -- return a singleton stack (the single element containing the result)
   ([s], _, h, _, _) = last states
-  states            = eval . compile . parse $ prog
+
+-- Get result of running program
+runGetResult :: String -> Int
+runGetResult = getResult . run
 
 -- Translate the program into a form suitable for execution
 compile :: CoreProgram -> TiState

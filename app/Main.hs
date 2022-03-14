@@ -3,15 +3,34 @@ module Main
   ) where
 
 import           Options.Applicative
-import           System.IO
 
-data FLCConfig = FLCConfig String
+import           Evaluators.TemplateInstantiation.Evaluator
+import           Evaluators.TemplateInstantiation.State
+import           Language
+import           Lexer
+import           Parser
+import           PrettyPrint
+
+-- Definition for argument parsing
+data FLCConfig = FLCConfig
+  { inputFile :: String
+  , verbose   :: Bool
+  }
 
 flcConfig :: Parser FLCConfig
-flcConfig = FLCConfig <$> argument str (metavar "FILE")
+flcConfig =
+  FLCConfig
+    <$> argument
+          str
+          (metavar "FILE" <> help "path to source file, or '-' for stdin")
+    <*> switch
+          (long "verbose" <> short 'v' <> help
+            "Print extra debugging information"
+          )
 
+-- Compiler entrypoint
 main :: IO ()
-main = main' =<< execParser opts
+main = getSourceFile =<< execParser opts
  where
   opts = info
     (flcConfig <**> helper)
@@ -20,13 +39,35 @@ main = main' =<< execParser opts
     <> header
          "fun-lazy-compiler -- a compiler and runtime for the Core lazy functional language"
     )
+  getSourceFile config = do
+    fileContents <- getFileContents $ inputFile config
+    performCompileAndPrint config fileContents
+  getFileContents "-" = getContents
+  getFileContents s   = readFile s
 
-main' :: FLCConfig -> IO ()
-main' (FLCConfig file) = do
-  sourceFileContents <- readSourceFile file
-  putStrLn $ "Got file contents: " ++ sourceFileContents
+-- Driver for executing the compilation stages and printing
+performCompileAndPrint :: FLCConfig -> String -> IO ()
+performCompileAndPrint FLCConfig { verbose = True } fileContents = mapM_
+  printOutput
+  verboseOutputs
+ where
+  printOutput (label, text) = putStrLn $ "\n\n" ++ label ++ ":\n" ++ text
+  verboseOutputs =
+    [ ("Lexed tokens"          , show tokens)
+    , ("Parsed AST"            , show program)
+    , ("Pretty-printed program", pprint program)
+    , ("Evaluation trace"      , showResults results)
+    , ("Program output"        , show result)
+    ]
+  (tokens, program, results, result) = performCompile fileContents
+performCompileAndPrint _ fileContents = putStrLn $ show result
+  where (_, _, _, result) = performCompile fileContents
 
--- Read a source file, or stdin if `-` is specified
-readSourceFile :: String -> IO String
-readSourceFile "-" = hGetContents stdin
-readSourceFile s   = readFile s
+-- Helper to get outputs of compilation stages
+performCompile :: String -> ([Token], CoreProgram, [TiState], Int)
+performCompile fileContents = (tokens, program, results, result)
+ where
+  result  = getResult results
+  results = eval . compile $ program
+  program = syntax tokens
+  tokens  = clex fileContents
