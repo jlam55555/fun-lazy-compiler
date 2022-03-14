@@ -1,0 +1,10 @@
+-- Church encoding of natural numbers.
+Z f x = x ;
+S n f x = f (n f x) ;
+
+inc x = x + 1 ;
+
+main =
+  let one = S Z
+  in let three = S (S one)
+  in compose (three inc) (one inc) 0

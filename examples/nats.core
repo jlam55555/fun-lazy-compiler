@@ -1,0 +1,5 @@
+-- Infinite stream of natural numbers.
+-- Need to import `cons.core`.
+numsFrom x = cons x (numsFrom (x + 1)) ;
+nats = numsFrom 0 ;
+main = getTenth nats

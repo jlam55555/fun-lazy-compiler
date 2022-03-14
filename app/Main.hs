@@ -13,16 +13,14 @@ import           PrettyPrint
 
 -- Definition for argument parsing
 data FLCConfig = FLCConfig
-  { inputFile :: String
-  , verbose   :: Bool
+  { inputFiles :: [String]
+  , verbose    :: Bool
   }
 
 flcConfig :: Parser FLCConfig
 flcConfig =
   FLCConfig
-    <$> argument
-          str
-          (metavar "FILE" <> help "path to source file, or '-' for stdin")
+    <$> some (argument str (metavar "FILES" <> help "source files"))
     <*> switch
           (long "verbose" <> short 'v' <> help
             "Print extra debugging information"
@@ -40,13 +38,13 @@ main = getSourceFile =<< execParser opts
          "fun-lazy-compiler -- a compiler and runtime for the Core lazy functional language"
     )
   getSourceFile config = do
-    fileContents <- getFileContents $ inputFile config
-    performCompileAndPrint config fileContents
+    sources <- mapM getFileContents $ inputFiles config
+    performCompileAndPrint config sources
   getFileContents "-" = getContents
   getFileContents s   = readFile s
 
 -- Driver for executing the compilation stages and printing
-performCompileAndPrint :: FLCConfig -> String -> IO ()
+performCompileAndPrint :: FLCConfig -> [String] -> IO ()
 performCompileAndPrint FLCConfig { verbose = True } fileContents = mapM_
   printOutput
   verboseOutputs
@@ -64,10 +62,13 @@ performCompileAndPrint _ fileContents = putStrLn $ show result
   where (_, _, _, result) = performCompile fileContents
 
 -- Helper to get outputs of compilation stages
-performCompile :: String -> ([Token], CoreProgram, [TiState], Int)
-performCompile fileContents = (tokens, program, results, result)
+-- Note: separately lexes and parses each files, and joins together
+-- the scDefs into one program.
+performCompile :: [String] -> ([Token], CoreProgram, [TiState], Int)
+performCompile fileContents = (concat tokens, program, results, result)
  where
   result  = getResult results
   results = eval . compile $ program
-  program = syntax tokens
-  tokens  = clex fileContents
+  program = concat asts
+  asts    = syntax <$> tokens
+  tokens  = clex <$> fileContents

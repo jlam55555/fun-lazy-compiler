@@ -6,11 +6,11 @@ BINARY=flc
 
 .PHONY: install uninstall test build clean
 
-test:
-	stack test
-
 build:
 	stack build
+
+test:
+	stack test
 
 install:
 	# Install to a default location (e.g., `~/.local/bin`)

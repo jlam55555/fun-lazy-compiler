@@ -1,0 +1,5 @@
+-- Infinite stream of fibonacci numbers.
+-- Need to import `cons.core`.
+fibsRec a b = cons a (fibsRec b (a + b)) ;
+fibs = fibsRec 0 1 ;
+main = getTenth fibs
