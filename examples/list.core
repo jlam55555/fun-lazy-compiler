@@ -1,0 +1,3 @@
+-- List example
+-- Requires TI Mark 5.
+main = length (Cons (Cons 2 3) (Cons 2 (Cons 3 Nil)))

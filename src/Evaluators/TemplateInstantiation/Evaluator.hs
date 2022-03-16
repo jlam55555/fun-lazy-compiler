@@ -104,6 +104,8 @@ primitives =
   , ("=="      , Eq)
   , ("~="      , NotEq)
   , ("casePair", CasePair)
+  , ("caseList", CaseList)
+  , ("abort"   , Abort)
   ]
 
 allocatePrim :: TiHeap -> (Name, Primitive) -> (TiHeap, (Name, Addr))
@@ -227,6 +229,8 @@ primStep state NotEq              = primComp state (/=)
 primStep state (Constr tag arity) = primConstr state tag arity
 primStep state If                 = primIf state
 primStep state CasePair           = primCasePair state
+primStep state CaseList           = primCaseList state
+primStep state Abort              = primAbort state
 
 -- Exercise 2.16: evaluation of `negate` (the only unary primitive)
 primNeg :: TiState -> TiState
@@ -355,10 +359,46 @@ primCasePair (s, d, h, e, stats) = state' where
   d'                     = tail s : d
   -- Get arguments
   (pair1Addr, pair2Addr) = getPairAddrs pair
-  getPairAddrs (NData 1 [pair1Addr', pair2Addr']) = (pair1Addr', pair2Addr')
+  getPairAddrs (NData tagPair' [pair1Addr', pair2Addr'])
+    | tagPair == tagPair' = (pair1Addr', pair2Addr')
+    | otherwise = error "primCasePair: argument is not a pair (incorrect tag)"
   getPairAddrs _ = error "primCasePair: argument is not a pair"
   pairAddr : handlerAddr : _ = getArgs h s
   pair                       = hLookup h pairAddr
+
+-- Exercise 2.24: implement `caseList` primitive. This is like a combination
+-- of `caseIf` and `casePair`.
+primCaseList :: TiState -> TiState
+primCaseList (s, d, h, e, stats) = state' where
+  state' | s' == [] = error "primCaseList: not enough arguments to caseList"
+         | isDataNode lst = (s', d, h', e, stats)
+         | otherwise = (s'', d', h, e, stats)
+  -- Stack, heap, and n if conditional is already evaluated
+  s'           = drop 3 s
+  rootAddr : _ = s'
+  h'           = updateHeap lst
+   where
+    updateHeap (NData tag _)
+      | tag == tagNil  = updateHeapNil
+      | tag == tagCons = updateHeapCons lst
+      | otherwise      = error "primCaseList: argument is not a list"
+    updateHeap _ = error "primCaseList: argument is not a list"
+    updateHeapNil = hUpdate h rootAddr $ NInd f1Addr
+    updateHeapCons (NData _ [cons1Addr, cons2Addr]) = h'''
+     where
+      (h'', ap) = hAlloc h $ NAp f2Addr cons1Addr
+      h'''      = hUpdate h'' rootAddr $ NAp ap cons2Addr
+    updateHeapCons _ = error "primCaseList: Cons: wrong number of arguments"
+  -- Stack and dump if argument is not evaluated
+  s''                           = [lstAddr]
+  d'                            = tail s : d
+  -- Get arguments
+  lstAddr : f1Addr : f2Addr : _ = getArgs h s
+  lst                           = hLookup h lstAddr
+
+-- Exercise 2.24: Implement primitive `abort`.
+primAbort :: TiState -> TiState
+primAbort = error "primAbort: abort: fatal error"
 
 -- Looks up all the arguments (names) for NAp nodes on the spine
 getArgs :: TiHeap -> TiStack -> [Addr]

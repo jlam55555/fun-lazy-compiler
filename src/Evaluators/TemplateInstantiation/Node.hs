@@ -4,6 +4,11 @@ module Evaluators.TemplateInstantiation.Node
   , trueNode
   , falseNode
   , boolToNode
+  , tagTrue
+  , tagFalse
+  , tagPair
+  , tagNil
+  , tagCons
   ) where
 
 import           Alloc
@@ -19,14 +24,22 @@ data Node = NAp Addr Addr                   -- Application
   deriving (Eq, Show)
 
 data Primitive = Neg | Add | Sub | Mul | Div
-  | Constr Int Int | If | CasePair
+  | Constr Int Int | If | CasePair | CaseList
   | Greater | GreaterEq | Less | LessEq | Eq | NotEq
+  | Abort
   deriving (Eq, Show)
 
--- Standard representations of booleans in Core
+-- Standard representations of special structured datatypes in Core
+tagTrue, tagFalse, tagPair, tagNil, tagCons :: Int
+tagTrue = 0
+tagFalse = 1
+tagPair = 2
+tagNil = 3
+tagCons = 4
+
 trueNode, falseNode :: Node
-trueNode = NData 1 []
-falseNode = NData 2 []
+trueNode = NData tagTrue []
+falseNode = NData tagFalse []
 
 boolToNode :: Bool -> Node
 boolToNode True  = trueNode

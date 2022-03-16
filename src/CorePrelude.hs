@@ -3,6 +3,7 @@ module CorePrelude
   , extraPreludeDefs
   ) where
 
+import           Evaluators.TemplateInstantiation.Node
 import           Language
 
 -- Standard Prelude for Core
@@ -28,12 +29,6 @@ preludeDefs =
   , ("twice", ["f"], EAp (EAp (EVar "compose") (EVar "f")) (EVar "f"))
   ]
 
--- Standard definitions for true/false
--- Mirrors definitions for nodes in Evaluators.TemplateInstantiation.Node
-trueExpr, falseExpr :: CoreExpr
-trueExpr = EConstr 1 0
-falseExpr = EConstr 2 0
-
 -- Introduced in section 2.3.4.
 -- Execise 2.20: Add definitions for conditionals.
 -- Exercise 2.22: Add definitions for pair.
@@ -41,8 +36,8 @@ extraPreludeDefs :: CoreProgram
 extraPreludeDefs =
   [
   -- Standard definitions for true/false
-    ("True" , [], trueExpr)
-  , ("False", [], falseExpr)
+    ("True" , [], EConstr tagTrue 0)
+  , ("False", [], EConstr tagFalse 0)
   -- Conditionals
   , ( "and"
     , ["x", "y"]
@@ -62,7 +57,26 @@ extraPreludeDefs =
     , EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "False")) (EVar "True")
     )
   -- Pairs
-  , ("mkPair", []   , EConstr 1 2)
+  , ("Pair", []   , EConstr tagPair 2)
   , ("fst", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K"))
   , ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K1"))
+  -- Lists
+  , ("Nil" , []   , EConstr tagNil 0)
+  , ("Cons", []   , EConstr tagCons 2)
+  , ( "head"
+    , ["l"]
+    , EAp (EAp (EAp (EVar "caseList") (EVar "l")) (EVar "abort")) (EVar "K")
+    )
+  , ( "tail"
+    , ["l"]
+    , EAp (EAp (EAp (EVar "caseList") (EVar "l")) (EVar "abort")) (EVar "K1")
+    )
+  , ( "length"
+    , ["xs"]
+    , EAp (EAp (EAp (EVar "caseList") (EVar "xs")) (ENum 0)) (EVar "length2")
+    )
+  , ( "length2"
+    , ["x", "xs"]
+    , EAp (EAp (EVar "+") (ENum 1)) (EAp (EVar "length") (EVar "xs"))
+    )
   ]
