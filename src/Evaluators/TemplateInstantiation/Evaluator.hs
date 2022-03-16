@@ -69,7 +69,20 @@ allocateSc h (name, args, body) = (h', (name, a))
 
 -- Add primitives to the heap
 primitives :: AssocList Name Primitive
-primitives = [("negate", Neg), ("+", Add), ("-", Sub), ("*", Mul), ("/", Div)]
+primitives =
+  [ ("negate", Neg)
+  , ("+"     , Add)
+  , ("-"     , Sub)
+  , ("*"     , Mul)
+  , ("/"     , Div)
+  , ("if"    , If)
+  , (">"     , Greater)
+  , (">="    , GreaterEq)
+  , ("<"     , Less)
+  , ("<="    , LessEq)
+  , ("=="    , Eq)
+  , ("~="    , NotEq)
+  ]
 
 allocatePrim :: TiHeap -> (Name, Primitive) -> (TiHeap, (Name, Addr))
 allocatePrim h (name, prim) = (h', (name, a))
@@ -99,8 +112,9 @@ tiFinal _ = -- stack contains more than one element or the dump is not empty
 -- Check if a Node is a data object rather than a redex
 -- (supercombinator or application)
 isDataNode :: Node -> Bool
-isDataNode (NNum _) = True
-isDataNode _        = False
+isDataNode (NNum _   ) = True
+isDataNode (NData _ _) = True
+isDataNode _           = False
 
 -- Update statistics on TiState on an evaluation step
 doAdmin :: TiState -> TiState
@@ -121,7 +135,8 @@ step state = dispatch $ hLookup h $ head s
   dispatch (NAp a1 a2              ) = apStep state a1 a2
   dispatch (NSupercomb sc args body) = scStep state sc args body
   dispatch (NInd a                 ) = indStep state a
-  dispatch (NPrim _ prim           ) = primStep state prim
+  dispatch (NPrim _   prim         ) = primStep state prim
+  dispatch (NData tag args         ) = dataStep state tag args
 
 -- Number may only appear on the stack spine if the current
 -- stack is final; in Mark 4, this will further evaluate if the
@@ -130,6 +145,11 @@ step state = dispatch $ hLookup h $ head s
 numStep :: TiState -> Int -> TiState
 numStep ([_], s : d, h, e, stats) _ = (s, d, h, e, stats)
 numStep _ _ = error "numStep: number applied as function"
+
+-- Exercise 2.21: Similar to above
+dataStep :: TiState -> Int -> [Addr] -> TiState
+dataStep ([_], s : d, h, e, stats) _ _ = (s, d, h, e, stats)
+dataStep _ _ _ = error "dataStep: structured data applied as function"
 
 -- Step when an application node is reached: add the function to the spine
 -- Exercise 2.16: updated to implement Equation 2.8
@@ -171,11 +191,19 @@ indStep (s, d, h, e, stats) a = (a : tail s, d, h, e, stats)
 -- Exercise 2.16: unary negation operator
 -- Exercise 2.17: binary arithmetic operators (+, -, *, /)
 primStep :: TiState -> Primitive -> TiState
-primStep state Neg = primNeg state
-primStep state Add = primArith state (+)
-primStep state Sub = primArith state (-)
-primStep state Mul = primArith state (*)
-primStep state Div = primArith state div
+primStep state Neg                = primNeg state
+primStep state Add                = primArith state (+)
+primStep state Sub                = primArith state (-)
+primStep state Mul                = primArith state (*)
+primStep state Div                = primArith state div
+primStep state Greater            = primComp state (>)
+primStep state GreaterEq          = primComp state (>=)
+primStep state Less               = primComp state (<)
+primStep state LessEq             = primComp state (<=)
+primStep state Eq                 = primComp state (==)
+primStep state NotEq              = primComp state (/=)
+primStep state (Constr tag arity) = primConstr state tag arity
+primStep state If                 = primIf state
 
 -- Exercise 2.16: evaluation of `negate` (the only unary primitive)
 primNeg :: TiState -> TiState
@@ -204,15 +232,30 @@ primNeg (s, d, h, e, stats) = state'
 
 -- Exercise 2.17: evaluation of binary primitive operators
 primArith :: TiState -> (Int -> Int -> Int) -> TiState
-primArith (s, d, h, e, stats) fn = state' where
+primArith state fn = primBinary state fn'
+ where
+  fn' (NNum n1) (NNum n2) = NNum $ fn n1 n2
+  fn' _ _ =
+    error "primComp: relational operators applied to non-integer values"
+
+primComp :: TiState -> (Int -> Int -> Bool) -> TiState
+primComp state fn = primBinary state fn'
+ where
+  fn' (NNum n1) (NNum n2) = boolToNode $ fn n1 n2
+  fn' _ _ =
+    error "primComp: relational operators applied to non-integer values"
+
+-- Exercise 2.21: Generalize `primArith` (and also make it easy to define
+-- `primComp`. I don't like the term "dyadic function" -- "binary" seems
+-- to be the more commonplace term.
+primBinary :: TiState -> (Node -> Node -> Node) -> TiState
+primBinary (s, d, h, e, stats) fn = state' where
   state' | isDataNode arg1 && isDataNode arg2 = (s', d, h', e, stats)
          | otherwise                          = (s''', d', h, e, stats)
   -- Stack, heap, and ns if arguments are already evaluated
   [_, _, rootAddr]      = s
   s'                    = [rootAddr]
-  h'                    = hUpdate h rootAddr $ NNum $ fn n1 n2
-  NNum n1               = arg1
-  NNum n2               = arg2
+  h'                    = hUpdate h rootAddr $ fn arg1 arg2
   -- Stack and dump if either argument is not evaluated;
   -- Note: both arguments are re-evaluated, even if one is already
   -- evaluated; this simplifies the implementation a little bit
@@ -221,17 +264,65 @@ primArith (s, d, h, e, stats) fn = state' where
   d'                    = s'' : s' : d
   -- Get both arguments
   argAddrs@[a1  , a2  ] = getArgs h s
-  [         arg1, arg2] = map (hLookup h) $ getTwoArgs argAddrs
+  [         arg1, arg2] = hLookup h <$> getTwoArgs argAddrs
    where
     getTwoArgs args@[_, _] = args
     getTwoArgs _ =
       error "primArith: wrong number of arguments to binary primitive"
 
+-- Exercise 2.21: implement application of constructor primitive.
+-- We don't need to force of the arguments here, which makes this simpler
+-- than the other `prim*` functions.
+primConstr :: TiState -> Int -> Int -> TiState
+primConstr (s, d, h, e, stats) tag arity = state'
+ where
+  state'
+    | length argAddrs == arity
+    = (s', d, h', e, stats)
+    | otherwise
+    = error
+      $  "primConstr: wrong number of arguments to constructor (expected "
+      ++ show arity
+      ++ ", got "
+      ++ show (length argAddrs)
+      ++ ")"
+  s'@[rootAddr] = drop arity s
+  h'            = hUpdate h rootAddr $ NData tag argAddrs
+  argAddrs      = getArgs h s
+
+-- Exercise 2.21: implement application of `if` primitive. We need to
+-- force the first argument (the conditional). The implementation of
+-- this function is fairly similar to `primNeg` and `primArith`.
+-- Note that unlike `primNeg`, `primArith`, and `primConstr`, the result
+-- may be a function, so the stack does not need to have exactly
+-- (arity + 1) elements.
+primIf :: TiState -> TiState
+primIf (s, d, h, e, stats) = state' where
+  state' | s' == []        = error "primIf: not enough arguments to if"
+         | isDataNode cond = (s', d, h', e, stats)
+         | otherwise       = (s'', d', h, e, stats)
+  -- Stack, heap, and n if conditional is already evaluated
+  s'           = drop 3 s
+  rootAddr : _ = s'
+  h'           = hUpdate h rootAddr $ NInd $ branch
+  branch | cond == trueNode  = thenAddr
+         | cond == falseNode = elseAddr
+         | otherwise         = error "primIf: conditional is not a boolean"
+  -- Stack and dump if argument is not evaluated
+  s''  = [condAddr]
+  d'   = s' : d
+  -- Get arguments
+  condAddr : thenAddr : elseAddr : _ = getArgs h s
+  cond = hLookup h condAddr
+
 -- Looks up all the arguments (names) for NAp nodes on the spine
 getArgs :: TiHeap -> TiStack -> [Addr]
 getArgs _ []      = error "getArgs: empty stack"
-getArgs h (_ : s) = map getArg s
-  where getArg a = arg where NAp _ arg = hLookup h a
+getArgs h (_ : s) = getArg <$> s
+ where
+  getArg a = arg
+    where -- Non-exhaustive pattern should never fail
+          NAp _ arg = hLookup h a
 
 -- Instantiate a supercombinator. Takes a sc, heap, and
 -- environment (globals + args bindings).
@@ -240,8 +331,8 @@ getArgs h (_ : s) = map getArg s
 type TiInst = TiHeap -> TiEnv -> (TiHeap, Addr)
 
 instantiate :: CoreExpr -> TiInst
-instantiate (ENum n   ) h _ = hAlloc h (NNum n)
-instantiate (EAp e1 e2) h e = hAlloc h'' (NAp a1 a2)
+instantiate (ENum n   ) h _ = hAlloc h $ NNum n
+instantiate (EAp e1 e2) h e = hAlloc h'' $ NAp a1 a2
  where
   (h' , a1) = instantiate e1 h e
   (h'', a2) = instantiate e2 h' e
@@ -253,7 +344,7 @@ instantiate (ECase _ _) _ _ = error "instantiate: can't instantiate case exprs"
 instantiate (ELam _ _) _ _ = error "instantiate: can't instantiate lambda fns"
 
 instantiateConstr :: Int -> Int -> TiInst
-instantiateConstr _ _ _ _ = error "instantiate: can't instantiate constructors"
+instantiateConstr tag arity h _ = hAlloc h $ NPrim "Constr" $ Constr tag arity
 
 -- Exercise 2.10, 2.11: Implement let(rec)
 instantiateLet :: IsRec -> [(Name, CoreExpr)] -> CoreExpr -> TiInst
@@ -273,20 +364,20 @@ instantiateLet isRec bindings body h e = instantiate body h' e'
 -- since the binding `f = f x` is not well-typed (similar to how the Y-combinator
 -- cannot be well-typed).
 
--- Exercise 2.14: Implement `instantiateAndUpdate`, used for the root of an
--- instantiation -- doesn't need to allocate a new node, since the application node
--- can be reused. (Recursive nodes do have to be allocated.) The second argument
--- is the address of the node to update
+-- Exercise 2.14: Implement `instantiateAndUpdate`. Same as instantiate, except that
+-- the root of the instantiation doesn't allocate a new node. The second argument
+-- is the address of the root node to update.
 type TiUpdInst = Addr -> TiHeap -> TiEnv -> TiHeap
 
 instantiateAndUpdate :: CoreExpr -> TiUpdInst
-instantiateAndUpdate (ENum n   ) updAddr h _ = hUpdate h updAddr (NNum n)
-instantiateAndUpdate (EAp e1 e2) updAddr h e = hUpdate h'' updAddr (NAp a1 a2)
+instantiateAndUpdate (ENum n   ) updAddr h _ = hUpdate h updAddr $ NNum n
+instantiateAndUpdate (EAp e1 e2) updAddr h e = hUpdate h'' updAddr $ NAp a1 a2
  where
   (h' , a1) = instantiate e1 h e
   (h'', a2) = instantiate e2 h' e
 -- Exercise 2.14: For `EVar`, we need to have an indirection because the
--- variable's address may be updated at some point.
+-- variable's address may be updated at some point. This is the only place
+-- where we need to create an `NInd`.
 instantiateAndUpdate (EVar v) updAddr h e = hUpdate h updAddr $ NInd a
   where a = lookupDef (error $ "instantiate: unbound var " ++ show v) v e
 instantiateAndUpdate (EConstr tag arity) updAddr h e =
@@ -299,8 +390,8 @@ instantiateAndUpdate (ELam _ _) _ _ _ =
   error "instantiateAndUpdate: can't instantiate lambda fns"
 
 instantiateAndUpdateConstr :: Int -> Int -> TiUpdInst
-instantiateAndUpdateConstr =
-  error "instantiateAndUpdate: can't instantiate constructors"
+instantiateAndUpdateConstr tag arity updAddr h _ =
+  hUpdate h updAddr $ NPrim "Constr" $ Constr tag arity
 
 -- Exercise 2.14: Note: we need to be careful to recursively call
 -- `instantiateAndUpdate` on the body expression but `instantiate` on the

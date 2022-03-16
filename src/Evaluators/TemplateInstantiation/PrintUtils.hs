@@ -59,6 +59,13 @@ showNode (NSupercomb name _ _) = iStr $ "NSupercomb " ++ name
 showNode (NNum n             ) = iStr "NNum " `iAppend` iNum n
 showNode (NInd a             ) = iStr "NInd " `iAppend` showAddr a
 showNode (NPrim name _       ) = iStr $ "NPrim " ++ name
+showNode (NData t    as      ) = iConcat
+  [ iStr "NData "
+  , iNum t
+  , iStr " ["
+  , iIndent $ iInterleave iNewline $ showAddr <$> as
+  , iStr " ]"
+  ]
 
 showAddr :: Addr -> Iseq
 showAddr a = iStr $ show a
