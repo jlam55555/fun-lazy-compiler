@@ -13,11 +13,9 @@ test:
 	stack test
 
 install:
-	# Install to a default location (e.g., `~/.local/bin`)
 	stack install
 
 uninstall:
-	# Remove installation (e.g., from `~/.local/bin`)
 	stack exec ghc-pkg unregister ${PKG}
 	rm -f $(shell whereis ${BINARY} | awk '{print $$2}')
 

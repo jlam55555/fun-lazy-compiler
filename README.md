@@ -3,6 +3,8 @@ A (simulated) compiler for a lazy functional language, following the tutorial by
 
 See tutorial (for [students][student.pdf]; for [tutors][tutor.pdf])
 
+---
+
 ### Usage
 ```text
 fun-lazy-compiler -- a compiler and runtime for the Core lazy functional
@@ -18,6 +20,8 @@ Available options:
 ```
 
 Source files may be a path to a file or `-` to read from stdin. If no source files are specified, `flc` will read a from stdin until EOF.
+
+---
 
 ### Build instructions
 This project uses the Haskell [Stack][stack] build environment. To build or run tests:
@@ -37,6 +41,8 @@ $ make uninstall    # uninstall from PATH
 
 All Haskell code is auto-formatted using the [brittany][brittany] formatter.
 
+---
+
 ### Examples
 Sample source files are listed in the `examples/` directory.
 
@@ -45,8 +51,12 @@ $ flc nats.core map.core pe1.core
 233168
 ```
 
+---
+
 ### Journal
-See [JOURNAL.md][JOURNAL.md] for a running set of notes on this project.
+<strike>See [JOURNAL.md][JOURNAL.md] for a running set of notes on this project.</strike> Note: currently out-of-date.
+
+---
 
 ### Implementation overview
 The implementation language is Haskell. Tests are run against the `latest` GHC, Cabal, and resolver versions -- see [the test specification][test-spec] for more details on the Haskell build environment.
