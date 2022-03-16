@@ -1,24 +1,16 @@
+-- Church encoding for `Cons`.
 -- This file will not compile standalone because there
 -- is no `main`. Need to include a driver file.
+-- Can be used alongside `cons.core`.
 -- Requires TI Mark 1.
 
--- Church encoding for `cons`.
-cons x y z = z x y ;
-car x = x K ;
-cdr x = x K1 ;
+-- Note: no definition of `Nil`, because we haven't
+-- defined structured data until TI Mark 5, and we don't
+-- actually need `Nil` until we deal with finite lists.
 
--- LISP-style.....
-caar = compose car car ;
-cadr = compose car cdr ;
-cdar = compose cdr car ;
-cddr = compose cdr cdr ;
-caadr = compose car cadr ;
-caaar = compose car caar ;
-cdadr = compose cdr cadr ;
-cdaar = compose cdr caar ;
-caddr = compose car cddr ;
-cadar = compose car cdar ;
-cdddr = compose cdr cddr ;
-cddar = compose cdr cdar ;
-
-getTenth = compose car (compose cdddr (compose cdddr cdddr))
+-- This will overwrite the list primitives in TI Mark 5.
+-- `cons2.core` may be used without this file to avoid
+-- overwritting the `Cons` primitive.
+Cons x y z = z x y ;
+fst x = x K ;
+snd x = x K1

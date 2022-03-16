@@ -1,6 +1,6 @@
 module Evaluators.TemplateInstantiation.PrintUtils
-  ( showResults
-  , showDataNode
+  ( showTrace
+  , showOutputNode
   ) where
 
 import           Alloc
@@ -11,17 +11,57 @@ import           Evaluators.TemplateInstantiation.Node
 import           Evaluators.TemplateInstantiation.State
 import           Evaluators.TemplateInstantiation.Statistics
 
--- Show the program result simply
-showDataNode :: Node -> String
-showDataNode (NNum n) = show n
-showDataNode node@(NData _ _) | node == trueNode  = "True"
-                              | node == falseNode = "False"
-                              | otherwise         = iDisplay . showNode $ node
-showDataNode _ = error "showDataNode: not a data node"
+-- Show the program result simply. Special handling for special
+-- structured data (requires heap), and very primitive representation
+-- for non-special structured data.
+showOutputNode :: TiHeap -> Node -> String
+showOutputNode h node = iDisplay $ showOutputNode' h node
 
--- Format the result of `eval` for printing.
-showResults :: [TiState] -> String
-showResults states =
+showOutputNode' :: TiHeap -> Node -> Iseq
+showOutputNode' _ (NNum n) = iNum n
+showOutputNode' h node@(NData tag _) | node == trueNode  = iStr "True"
+                                     | node == falseNode = iStr "False"
+                                     | tag == tagNil     = showNil node
+                                     | tag == tagCons    = showCons node
+                                     | otherwise         = showData node
+ where
+  showNil (NData _ []) = iStr "[]"
+  showNil _            = error "showOutputNode: node tagged as nil not nil"
+  showCons (NData _ [a1, a2]) = iConcat
+    [ iStr "("
+    , showOutputNode' h $ hLookup h a1
+    , iStr " : "
+    , showOutputNode' h $ hLookup h a2
+    , iStr ")"
+    ]
+  showCons _ = error "showOutputNode: node tagged as cons not a pair"
+  showData (NData _ argAddrs) = iConcat
+    [ iStr "<"
+    , iNum tag
+    , iStr ">( "
+    , iIndent
+    $   iInterleave iNewline
+    $   showOutputNode' h
+    .   hLookup h
+    <$> argAddrs
+    , iStr " )"
+    ]
+  -- Should not occur; internal error
+  showData _ = error "showOutputNode: not a structured data node"
+showOutputNode' h (NInd a   ) = showOutputNode' h $ hLookup h a
+showOutputNode' h (NAp a1 a2) = iConcat
+  [ iStr "("
+  , showOutputNode' h $ hLookup h a1
+  , iStr " "
+  , showOutputNode' h $ hLookup h a2
+  , iStr ")"
+  ]
+showOutputNode' _ (NSupercomb name _ _) = iStr name
+showOutputNode' _ (NPrim name _       ) = iStr name
+
+-- Format the result of `eval` (a trace of states) for printing.
+showTrace :: [TiState] -> String
+showTrace states =
   iDisplay $ iConcat [iLayn $ showState <$> states, showStats $ last states]
 
 -- Exercise 2.5. Modify `showState` to print out heap.

@@ -1,15 +1,6 @@
 module Evaluators.TemplateInstantiation.Evaluator
-  ( run
-  , runShowResult
-  , runGetResult
-  , runGetNumResult
-  , runGetBoolResult
-  , runShowResultSimple
-  , getResult
-  , compile
+  ( compile
   , eval
-  , showResults
-  , showDataNode
   ) where
 
 import           Data.AssocList
@@ -17,52 +8,12 @@ import           Data.AssocList
 import           Alloc
 import           CorePrelude
 import           Language
-import           Parser
 import           Utils
 
 import           Evaluators.TemplateInstantiation.Node
-import           Evaluators.TemplateInstantiation.PrintUtils
+import           Evaluators.TemplateInstantiation.Primitives
 import           Evaluators.TemplateInstantiation.State
 import           Evaluators.TemplateInstantiation.Statistics
-
--- Simply run program
-run :: String -> [TiState]
-run = eval . compile . parse
-
--- Driver for the graph reduction implementation;
--- runs program and shows result
-runShowResult :: String -> String
-runShowResult = showResults . run
-
--- Get data from program result
-getResult :: [TiState] -> Node
-getResult states = hLookup h s
-  where -- Non-exhaustive pattern should not fail because `eval` should always
-        -- return a singleton stack (the single element containing the result)
-        ([s], _, h, _, _) = last states
-
--- Get result of running program
-runGetResult :: String -> Node
-runGetResult = getResult . run
-
--- Get numeric result; useful for tests
-runGetNumResult :: String -> Int
-runGetNumResult = toNum . runGetResult
- where
-  toNum (NNum n) = n
-  toNum _        = error "runGetNumResult: not a numeric result"
-
--- Get boolean result; useful for tests
-runGetBoolResult :: String -> Bool
-runGetBoolResult = toNum . runGetResult
- where
-  toNum b | b == trueNode  = True
-          | b == falseNode = False
-          | otherwise      = error "runGetBoolResult: not a boolean result"
-
--- Print simple form of answer
-runShowResultSimple :: String -> String
-runShowResultSimple = showDataNode . runGetResult
 
 -- Translate the program into a form suitable for execution
 compile :: CoreProgram -> TiState
@@ -70,9 +21,9 @@ compile program =
   (initialStack, initialTiDump, initialHeap, globalEnv, tiStatInitial)
  where
   -- `program` is reversed so that later definitions override earlier ones
-  scDefs = (reverse program) ++ preludeDefs ++ extraPreludeDefs
+  scDefs                   = reverse program ++ preludeDefs ++ extraPreludeDefs
   (initialHeap, globalEnv) = buildInitialHeap scDefs
-  initialStack = [addressOfMain]
+  initialStack             = [addressOfMain]
   addressOfMain =
     lookupDef (error "compile: main is not defined") "main" globalEnv
 
@@ -87,26 +38,6 @@ buildInitialHeap scDefs = (h', scAddrs ++ primAddrs)
 allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))
 allocateSc h (name, args, body) = (h', (name, a))
   where (h', a) = hAlloc h $ NSupercomb name args body
-
--- Add primitives to the heap
-primitives :: AssocList Name Primitive
-primitives =
-  [ ("negate"  , Neg)
-  , ("+"       , Add)
-  , ("-"       , Sub)
-  , ("*"       , Mul)
-  , ("/"       , Div)
-  , ("if"      , If)
-  , (">"       , Greater)
-  , (">="      , GreaterEq)
-  , ("<"       , Less)
-  , ("<="      , LessEq)
-  , ("=="      , Eq)
-  , ("~="      , NotEq)
-  , ("casePair", CasePair)
-  , ("caseList", CaseList)
-  , ("abort"   , Abort)
-  ]
 
 allocatePrim :: TiHeap -> (Name, Primitive) -> (TiHeap, (Name, Addr))
 allocatePrim h (name, prim) = (h', (name, a))
@@ -359,8 +290,8 @@ primCasePair (s, d, h, e, stats) = state' where
   d'                     = tail s : d
   -- Get arguments
   (pair1Addr, pair2Addr) = getPairAddrs pair
-  getPairAddrs (NData tagPair' [pair1Addr', pair2Addr'])
-    | tagPair == tagPair' = (pair1Addr', pair2Addr')
+  getPairAddrs (NData tagCons' [pair1Addr', pair2Addr'])
+    | tagCons == tagCons' = (pair1Addr', pair2Addr')
     | otherwise = error "primCasePair: argument is not a pair (incorrect tag)"
   getPairAddrs _ = error "primCasePair: argument is not a pair"
   pairAddr : handlerAddr : _ = getArgs h s

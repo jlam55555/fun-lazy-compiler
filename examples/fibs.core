@@ -1,6 +1,7 @@
 -- Infinite stream of fibonacci numbers.
--- Need to import `cons.core`.
--- Requires TI Mark 4.
-fibsRec a b = cons a (fibsRec b (a + b)) ;
+-- Requires TI Mark 5, or TI Mark 4 with `cons.core`.
+fibsRec a b = Cons a (fibsRec b (a + b)) ;
 fibs = fibsRec 0 1 ;
+
+-- Requires `cons2.core`
 main = getTenth fibs

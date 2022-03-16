@@ -1,18 +1,18 @@
 module Evaluators.TemplateInstantiation.Node
   ( Node(..)
-  , Primitive(..)
   , trueNode
   , falseNode
   , boolToNode
   , tagTrue
   , tagFalse
-  , tagPair
   , tagNil
   , tagCons
   ) where
 
 import           Alloc
 import           Language
+
+import           Evaluators.TemplateInstantiation.Primitives
 
 -- Elements on the heap/stack
 data Node = NAp Addr Addr                   -- Application
@@ -23,17 +23,13 @@ data Node = NAp Addr Addr                   -- Application
           | NData Int [Addr]                -- Structured data
   deriving (Eq, Show)
 
-data Primitive = Neg | Add | Sub | Mul | Div
-  | Constr Int Int | If | CasePair | CaseList
-  | Greater | GreaterEq | Less | LessEq | Eq | NotEq
-  | Abort
-  deriving (Eq, Show)
-
 -- Standard representations of special structured datatypes in Core
-tagTrue, tagFalse, tagPair, tagNil, tagCons :: Int
+-- Note: `tagCons` is used for both `Pair` and `Cons`, which are
+-- functionally equal (aliases), and methods for one can be used
+-- for the other.
+tagTrue, tagFalse, tagNil, tagCons :: Int
 tagTrue = 0
 tagFalse = 1
-tagPair = 2
 tagNil = 3
 tagCons = 4
 

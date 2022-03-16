@@ -1,0 +1,14 @@
+-- Project Euler 1. Very slow on the TI evaluator :(
+-- Requires `nats.core`, `map.core`
+N = 1000 ;
+
+ltN x = x < N ;
+
+sumMultsOfMUnderN m =
+  let multsOfM       = map (mul m) nats in
+  let multsOfMUnderN = takeWhile ltN multsOfM in
+  sum multsOfMUnderN ;
+
+main =
+  let f = sumMultsOfMUnderN
+  in f 3 + f 5 - f 15

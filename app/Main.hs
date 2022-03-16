@@ -8,7 +8,7 @@ import           Control.Exception
 import           System.IO.Error
 
 import           CorePrelude
-import           Evaluators.TemplateInstantiation.Evaluator
+import           Evaluators.TemplateInstantiation
 import           Evaluators.TemplateInstantiation.State
 import           Language
 import           Lexer
@@ -24,7 +24,7 @@ data FLCConfig = FLCConfig
 flcConfig :: Parser FLCConfig
 flcConfig =
   FLCConfig
-    <$> many (argument str (metavar "FILES" <> help "source files"))
+    <$> many (argument str (metavar "FILES" <> help "Source file(s)"))
     <*> switch
           (long "verbose" <> short 'v' <> help
             "Print extra debugging information"
@@ -72,7 +72,7 @@ performCompileAndPrint FLCConfig { verbose = True } fileContents = mapM_
     , ("Parsed AST"            , show program)
     , ("Prelude", pprint $ preludeDefs ++ extraPreludeDefs)
     , ("Pretty-printed program", pprint program)
-    , ("Evaluation trace"      , showResults results)
+    , ("Evaluation trace"      , showTrace results)
     , ("Program output"        , result)
     ]
   (tokens, program, results, result) = performCompile fileContents
@@ -81,11 +81,13 @@ performCompileAndPrint _ fileContents = putStrLn result
 
 -- Helper to get outputs of compilation stages
 -- Note: separately lexes and parses each files, and joins together
--- the scDefs into one program.
+-- the scDefs into one program. Does not simply concatenate files due
+-- to the specifics of the grammar (strict interleaving of semicolons
+-- between supercombinators, and no trailing semicolons).
 performCompile :: [String] -> ([Token], CoreProgram, [TiState], String)
 performCompile fileContents = (concat tokens, program, results, result)
  where
-  result  = showDataNode . getResult $ results
+  result  = showOutput results
   results = eval . compile $ program
   program = concat asts
   asts    = syntax <$> tokens

@@ -56,13 +56,14 @@ extraPreludeDefs =
     , ["x"]
     , EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "False")) (EVar "True")
     )
+  , ("isZero", ["x"], EAp (EAp (EVar "==") (EVar "x")) (ENum 0))
   -- Pairs
-  , ("Pair", []   , EConstr tagPair 2)
+  , ("Pair"  , []   , EConstr tagCons 2)
   , ("fst", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K"))
   , ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K1"))
   -- Lists
-  , ("Nil" , []   , EConstr tagNil 0)
-  , ("Cons", []   , EConstr tagCons 2)
+  , ("Nil"   , []   , EConstr tagNil 0)
+  , ("Cons"  , []   , EConstr tagCons 2)
   , ( "head"
     , ["l"]
     , EAp (EAp (EAp (EVar "caseList") (EVar "l")) (EVar "abort")) (EVar "K")
@@ -78,5 +79,9 @@ extraPreludeDefs =
   , ( "length2"
     , ["x", "xs"]
     , EAp (EAp (EVar "+") (ENum 1)) (EAp (EVar "length") (EVar "xs"))
+    )
+  , ( "isNil"
+    , ["l"]
+    , EAp (EAp (EVar "==") (EAp (EVar "length") (EVar "l"))) (ENum 0)
     )
   ]

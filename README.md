@@ -1,7 +1,23 @@
-# Fun Lazy Compiler (flc)
+# Fun Lazy Compiler (`flc`)
 A (simulated) compiler for a lazy functional language, following the tutorial by Simon Peyton Jones
 
 See tutorial (for [students][student.pdf]; for [tutors][tutor.pdf])
+
+### Usage
+```text
+fun-lazy-compiler -- a compiler and runtime for the Core lazy functional
+language
+
+Usage: flc [FILES] [-v|--verbose]
+  Compile and evaluate a program in the Core language
+
+Available options:
+  FILES                    Source file(s)
+  -v,--verbose             Print extra debugging information
+  -h,--help                Show this help text
+```
+
+Source files may be a path to a file or `-` to read from stdin. If no source files are specified, `flc` will read a from stdin until EOF.
 
 ### Build instructions
 This project uses the Haskell [Stack][stack] build environment. To build or run tests:
@@ -25,7 +41,8 @@ All Haskell code is auto-formatted using the [brittany][brittany] formatter.
 Sample source files are listed in the `examples/` directory.
 
 ```bash
-$ flc examples/cons.core examples/fibs.core
+$ flc nats.core map.core pe1.core
+233168
 ```
 
 ### Journal

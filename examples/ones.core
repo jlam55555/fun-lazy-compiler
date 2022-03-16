@@ -1,4 +1,7 @@
 -- Infinite stream of ones.
--- Need to import `cons.core`
--- Requires TI Mark 2.
-main = letrec ones = cons 1 ones in getTenth ones
+-- Requires TI Mark 5, or TI Mark 2 with `cons.core`.
+-- Also requires `cons2.core`.
+ones = Cons 1 ones ;
+
+-- Requires `cons2.core`
+main = letrec ones = Cons 1 ones in getTenth ones

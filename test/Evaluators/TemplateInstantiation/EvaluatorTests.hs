@@ -4,7 +4,7 @@ module Evaluators.TemplateInstantiation.EvaluatorTests
 
 import           Test.HUnit
 
-import           Evaluators.TemplateInstantiation.Evaluator
+import           Evaluators.TemplateInstantiation
 
 progSKK3, progLet, progLetSc, progLetRec, progInd :: String
 progNeg1, progNeg2, progNeg3, progArith1, progArith2 :: String
@@ -116,37 +116,37 @@ progList = "main = length (Cons (Cons 2 3) (Cons 2 (Cons 3 Nil)))"
 
 tests :: Test
 tests = test
-  [ "exercise 2.4" ~: runGetNumResult progSKK3 ~=? 3
-  , "let example 1" ~: runGetNumResult progLet ~=? 4
-  , "let example 2" ~: runGetNumResult progLetSc ~=? 5
-  , "letrec" ~: runGetNumResult progLetRec ~=? 6
-  , "indirections" ~: runGetNumResult progInd ~=? 7
-  , "unary primitive (`negate`) w/o dump" ~: runGetNumResult progNeg1 ~=? (-3)
-  , "unary primitive (`negate`) w/ dump" ~: runGetNumResult progNeg2 ~=? 3
+  [ "exercise 2.4" ~: runGetNumOutput progSKK3 ~=? 3
+  , "let example 1" ~: runGetNumOutput progLet ~=? 4
+  , "let example 2" ~: runGetNumOutput progLetSc ~=? 5
+  , "letrec" ~: runGetNumOutput progLetRec ~=? 6
+  , "indirections" ~: runGetNumOutput progInd ~=? 7
+  , "unary primitive (`negate`) w/o dump" ~: runGetNumOutput progNeg1 ~=? (-3)
+  , "unary primitive (`negate`) w/ dump" ~: runGetNumOutput progNeg2 ~=? 3
   , "unary primitive (`negate`) w/ indirection"
-  ~:  runGetNumResult progNeg3
+  ~:  runGetNumOutput progNeg3
   ~=? (-3)
-  , "binary primitive" ~: runGetNumResult progArith1 ~=? 101
-  , "binary primitive 2" ~: runGetNumResult progArith2 ~=? (-3)
-  , "church" ~: runGetNumResult progChurch ~=? 4
-  , "cons" ~: runGetNumResult progCons ~=? 2
-  , "infinite streams (ones)" ~: runGetNumResult progInfinite1 ~=? 1
-  , "infinite streams (nats)" ~: runGetNumResult progInfinite2 ~=? 9
-  , "infinite streams (fibs)" ~: runGetNumResult progInfinite3 ~=? 34
-  , "and F F" ~: not (runGetBoolResult progAnd1) ~? ""
-  , "and F T" ~: not (runGetBoolResult progAnd2) ~? ""
-  , "and T F" ~: not (runGetBoolResult progAnd3) ~? ""
-  , "and T T" ~: runGetBoolResult progAnd4 ~? ""
-  , "or F F" ~: not (runGetBoolResult progOr1) ~? ""
-  , "or F T" ~: runGetBoolResult progOr2 ~? ""
-  , "or T F" ~: runGetBoolResult progOr3 ~? ""
-  , "or T T" ~: runGetBoolResult progOr4 ~? ""
-  , "xor F F" ~: not (runGetBoolResult progXor1) ~? ""
-  , "xor F T" ~: runGetBoolResult progXor2 ~? ""
-  , "xor T F" ~: runGetBoolResult progXor3 ~? ""
-  , "xor T T" ~: not (runGetBoolResult progXor4) ~? ""
-  , "factorial" ~: runGetNumResult progFac ~=? 6
-  , "naive fib" ~: runGetNumResult progFib ~=? 8
-  , "pairs" ~: runGetNumResult progPair ~=? 2
-  , "list" ~: runGetNumResult progList ~=? 3
+  , "binary primitive" ~: runGetNumOutput progArith1 ~=? 101
+  , "binary primitive 2" ~: runGetNumOutput progArith2 ~=? (-3)
+  , "church" ~: runGetNumOutput progChurch ~=? 4
+  , "cons" ~: runGetNumOutput progCons ~=? 2
+  , "infinite streams (ones)" ~: runGetNumOutput progInfinite1 ~=? 1
+  , "infinite streams (nats)" ~: runGetNumOutput progInfinite2 ~=? 9
+  , "infinite streams (fibs)" ~: runGetNumOutput progInfinite3 ~=? 34
+  , "and F F" ~: not (runGetBoolOutput progAnd1) ~? ""
+  , "and F T" ~: not (runGetBoolOutput progAnd2) ~? ""
+  , "and T F" ~: not (runGetBoolOutput progAnd3) ~? ""
+  , "and T T" ~: runGetBoolOutput progAnd4 ~? ""
+  , "or F F" ~: not (runGetBoolOutput progOr1) ~? ""
+  , "or F T" ~: runGetBoolOutput progOr2 ~? ""
+  , "or T F" ~: runGetBoolOutput progOr3 ~? ""
+  , "or T T" ~: runGetBoolOutput progOr4 ~? ""
+  , "xor F F" ~: not (runGetBoolOutput progXor1) ~? ""
+  , "xor F T" ~: runGetBoolOutput progXor2 ~? ""
+  , "xor T F" ~: runGetBoolOutput progXor3 ~? ""
+  , "xor T T" ~: not (runGetBoolOutput progXor4) ~? ""
+  , "factorial" ~: runGetNumOutput progFac ~=? 6
+  , "naive fib" ~: runGetNumOutput progFib ~=? 8
+  , "pairs" ~: runGetNumOutput progPair ~=? 2
+  , "list" ~: runGetNumOutput progList ~=? 3
   ]

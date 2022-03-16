@@ -1,0 +1,63 @@
+-- Common list primitives: `map`, `filter`, `fold`, `take`, `drop`, `nth`.
+-- Requires TI Mark 5.
+
+map f xs = caseList xs Nil (map2 f) ;
+map2 f x xs = Cons (f x) (map f xs) ;
+
+filter p xs = caseList xs Nil (filter2 p) ;
+filter2 p x xs =
+  let next = filter p xs in
+  if (p x) (Cons x next) next ;
+
+-- fold(l) :: (a -> b -> a) -> a -> [b] -> [a]
+fold f acc xs = caseList xs acc (fold2 f acc) ;
+fold2 f acc x xs = fold f (f acc x) xs ;
+
+take n xs = if (n <= 0) Nil (caseList xs Nil (take2 n)) ;
+take2 n x xs = Cons x (take (n - 1) xs) ;
+
+takeWhile p xs = caseList xs Nil (takeWhile2 p) ;
+takeWhile2 p x xs = if (p x) (Cons x (takeWhile p xs)) Nil ;
+
+drop n xs = if (n <= 0) xs (caseList xs Nil (drop2 n)) ;
+drop2 n x xs = drop (n - 1) xs ;
+
+nth n xs = caseList xs abort (nth2 n) ;
+nth2 n x xs = if (n <= 0) x (nth (n - 1) xs) ;
+
+-- Sample functions to use with `map`
+inc x = x + 1 ;
+double x = x * 2 ;
+
+-- Sample predicates to use with `filter`
+mod m n = m - (m / n) * n ;     -- should be a primitive
+even x = mod x 2 == 0 ;
+odd x = not (even x) ;
+
+-- Sample accumulators to use with `fold`
+add acc val = acc + val ;
+mul acc val = acc * val ;
+
+-- Example: sum and product of a list
+sum = fold add 0 ;
+prod = fold mul 1 ;
+
+-- Example: generate a linear range from a to b, inclusive
+range a b = map (add a) (take ((b - a) + 1) nats) ;
+
+-- Example: alternative way to write factorial
+-- Requires `nats.core`
+fac2 n =
+  let finiteNats = take n (drop 1 nats) in
+  prod finiteNats 
+
+-- Example programs:
+-- main = nth 10 fibs  -- requires `fibs.core`
+-- main = fac2 10
+-- main = length (range 5 10)
+-- main = fold add 0 (filter even (range 5 10))
+
+-- Would be nice to have a function that can force a list
+-- (because I'm not sure how to do that in this framework
+-- at the moment -- is probably similar to the print list
+-- functionality described at the end of Mark 5 of the TI).

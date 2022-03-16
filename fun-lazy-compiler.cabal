@@ -28,8 +28,10 @@ library
   exposed-modules:
       Alloc
       CorePrelude
+      Evaluators.TemplateInstantiation
       Evaluators.TemplateInstantiation.Evaluator
       Evaluators.TemplateInstantiation.Node
+      Evaluators.TemplateInstantiation.Primitives
       Evaluators.TemplateInstantiation.PrintUtils
       Evaluators.TemplateInstantiation.State
       Evaluators.TemplateInstantiation.Statistics
