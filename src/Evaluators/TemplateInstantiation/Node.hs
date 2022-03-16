@@ -19,7 +19,7 @@ data Node = NAp Addr Addr                   -- Application
   deriving (Eq, Show)
 
 data Primitive = Neg | Add | Sub | Mul | Div
-  | Constr Int Int | If
+  | Constr Int Int | If | CasePair
   | Greater | GreaterEq | Less | LessEq | Eq | NotEq
   deriving (Eq, Show)
 

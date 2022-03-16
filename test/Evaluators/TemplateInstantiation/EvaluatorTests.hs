@@ -12,7 +12,7 @@ progChurch, progCons, progInfinite1, progInfinite2, progInfinite3 :: String
 progAnd1, progAnd2, progAnd3, progAnd4 :: String
 progOr1, progOr2, progOr3, progOr4 :: String
 progXor1, progXor2, progXor3, progXor4 :: String
-progFac, progFib :: String
+progFac, progFib, progPair :: String
 
 -- Exercise 2.4
 progSKK3 = "main = S K K 3"
@@ -108,6 +108,9 @@ progFac = "fac n = if (n == 0) 1 (n * fac (n - 1)) ;\
 progFib = "fib n = if (n < 2) n (fib (n - 1) + fib (n - 2)) ;\
   \main = fib 6"
 
+-- Exercise 2.22: Pair
+progPair = "main = fst (snd (fst (MkPair (MkPair 1 (MkPair 2 3)) 4)))"
+
 tests :: Test
 tests = test
   [ "exercise 2.4" ~: runGetNumResult progSKK3 ~=? 3
@@ -141,4 +144,5 @@ tests = test
   , "xor T T" ~: not (runGetBoolResult progXor4) ~? ""
   , "factorial" ~: runGetNumResult progFac ~=? 6
   , "naive fib" ~: runGetNumResult progFib ~=? 8
+  , "pairs" ~: runGetNumResult progPair ~=? 2
   ]

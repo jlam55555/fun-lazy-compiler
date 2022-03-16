@@ -35,25 +35,34 @@ trueExpr = EConstr 1 0
 falseExpr = EConstr 2 0
 
 -- Introduced in section 2.3.4.
--- Execise 2.20: definitions for conditionals added.
+-- Execise 2.20: Add definitions for conditionals.
+-- Exercise 2.22: Add definitions for pair.
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs =
   [
   -- Standard definitions for true/false
     ("True" , [], trueExpr)
   , ("False", [], falseExpr)
+  -- Conditionals
   , ( "and"
     , ["x", "y"]
-    , EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "y")) falseExpr
+    , EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "y")) (EVar "False")
     )
   , ( "or"
     , ["x", "y"]
-    , EAp (EAp (EAp (EVar "if") (EVar "x")) trueExpr) (EVar "y")
+    , EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "True")) (EVar "y")
     )
   , ( "xor"
     , ["x", "y"]
     , EAp (EAp (EAp (EVar "if") (EVar "x")) (EAp (EVar "not") (EVar "y")))
           (EVar "y")
     )
-  , ("not", ["x"], EAp (EAp (EAp (EVar "if") (EVar "x")) falseExpr) trueExpr)
+  , ( "not"
+    , ["x"]
+    , EAp (EAp (EAp (EVar "if") (EVar "x")) (EVar "False")) (EVar "True")
+    )
+  -- Pairs
+  , ("mkPair", []   , EConstr 1 2)
+  , ("fst", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K"))
+  , ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p")) (EVar "K1"))
   ]

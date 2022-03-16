@@ -1,0 +1,3 @@
+-- Pair test
+-- Requires TI Mark 5.
+main = fst (snd (fst (MkPair (MkPair 1 (MkPair 2 3)) 4)))

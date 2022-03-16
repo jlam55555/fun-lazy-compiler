@@ -91,18 +91,19 @@ allocateSc h (name, args, body) = (h', (name, a))
 -- Add primitives to the heap
 primitives :: AssocList Name Primitive
 primitives =
-  [ ("negate", Neg)
-  , ("+"     , Add)
-  , ("-"     , Sub)
-  , ("*"     , Mul)
-  , ("/"     , Div)
-  , ("if"    , If)
-  , (">"     , Greater)
-  , (">="    , GreaterEq)
-  , ("<"     , Less)
-  , ("<="    , LessEq)
-  , ("=="    , Eq)
-  , ("~="    , NotEq)
+  [ ("negate"  , Neg)
+  , ("+"       , Add)
+  , ("-"       , Sub)
+  , ("*"       , Mul)
+  , ("/"       , Div)
+  , ("if"      , If)
+  , (">"       , Greater)
+  , (">="      , GreaterEq)
+  , ("<"       , Less)
+  , ("<="      , LessEq)
+  , ("=="      , Eq)
+  , ("~="      , NotEq)
+  , ("casePair", CasePair)
   ]
 
 allocatePrim :: TiHeap -> (Name, Primitive) -> (TiHeap, (Name, Addr))
@@ -225,6 +226,7 @@ primStep state Eq                 = primComp state (==)
 primStep state NotEq              = primComp state (/=)
 primStep state (Constr tag arity) = primConstr state tag arity
 primStep state If                 = primIf state
+primStep state CasePair           = primCasePair state
 
 -- Exercise 2.16: evaluation of `negate` (the only unary primitive)
 primNeg :: TiState -> TiState
@@ -331,10 +333,32 @@ primIf (s, d, h, e, stats) = state' where
          | otherwise         = error "primIf: conditional is not a boolean"
   -- Stack and dump if argument is not evaluated
   s''  = [condAddr]
-  d'   = s' : d
+  d'   = tail s : d
   -- Get arguments
   condAddr : thenAddr : elseAddr : _ = getArgs h s
   cond = hLookup h condAddr
+
+-- Exercise 2.22: implement `casePair` primitive. This is fairly similar
+-- to the evaluation of primIf
+primCasePair :: TiState -> TiState
+primCasePair (s, d, h, e, stats) = state' where
+  state' | s' == [] = error "primCasePair: not enough arguments to casePair"
+         | isDataNode pair = (s', d, h'', e, stats)
+         | otherwise = (s'', d', h, e, stats)
+  -- Stack, heap, and n if conditional is already evaluated
+  s'                     = drop 2 s
+  rootAddr : _           = s'
+  (h', ap)               = hAlloc h $ NAp handlerAddr pair1Addr
+  h''                    = hUpdate h' rootAddr $ NAp ap pair2Addr
+  -- Stack and dump if argument is not evaluated
+  s''                    = [pairAddr]
+  d'                     = tail s : d
+  -- Get arguments
+  (pair1Addr, pair2Addr) = getPairAddrs pair
+  getPairAddrs (NData 1 [pair1Addr', pair2Addr']) = (pair1Addr', pair2Addr')
+  getPairAddrs _ = error "primCasePair: argument is not a pair"
+  pairAddr : handlerAddr : _ = getArgs h s
+  pair                       = hLookup h pairAddr
 
 -- Looks up all the arguments (names) for NAp nodes on the spine
 getArgs :: TiHeap -> TiStack -> [Addr]
