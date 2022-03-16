@@ -9,6 +9,10 @@ import           Evaluators.TemplateInstantiation.Evaluator
 progSKK3, progLet, progLetSc, progLetRec, progInd :: String
 progNeg1, progNeg2, progNeg3, progArith1, progArith2 :: String
 progChurch, progCons, progInfinite1, progInfinite2, progInfinite3 :: String
+progAnd1, progAnd2, progAnd3, progAnd4 :: String
+progOr1, progOr2, progOr3, progOr4 :: String
+progXor1, progXor2, progXor3, progXor4 :: String
+progFac, progFib :: String
 
 -- Exercise 2.4
 progSKK3 = "main = S K K 3"
@@ -80,23 +84,61 @@ progInfinite3 =
        \fibs = fibsRec 0 1 ;\
        \main = getTenth fibs"
 
+-- Conditionals; checking truth tables
+progAnd1 = "main = and False False"
+progAnd2 = "main = and False True"
+progAnd3 = "main = and True False"
+progAnd4 = "main = and True True"
+
+progOr1 = "main = or False False"
+progOr2 = "main = or False True"
+progOr3 = "main = or True False"
+progOr4 = "main = or True True"
+
+progXor1 = "main = xor False False"
+progXor2 = "main = xor False True"
+progXor3 = "main = xor True False"
+progXor4 = "main = xor True True"
+
+-- Factorial
+progFac = "fac n = if (n == 0) 1 (n * fac (n - 1)) ;\
+  \main = fac 3"
+
+-- Naive fibonacci
+progFib = "fib n = if (n < 2) n (fib (n - 1) + fib (n - 2)) ;\
+  \main = fib 6"
+
 tests :: Test
 tests = test
-  [ "exercise 2.4" ~: runGetResult progSKK3 ~=? 3
-  , "let example 1" ~: runGetResult progLet ~=? 4
-  , "let example 2" ~: runGetResult progLetSc ~=? 5
-  , "letrec" ~: runGetResult progLetRec ~=? 6
-  , "indirections" ~: runGetResult progInd ~=? 7
-  , "unary primitive (`negate`) w/o dump" ~: runGetResult progNeg1 ~=? (-3)
-  , "unary primitive (`negate`) w/ dump" ~: runGetResult progNeg2 ~=? 3
+  [ "exercise 2.4" ~: runGetNumResult progSKK3 ~=? 3
+  , "let example 1" ~: runGetNumResult progLet ~=? 4
+  , "let example 2" ~: runGetNumResult progLetSc ~=? 5
+  , "letrec" ~: runGetNumResult progLetRec ~=? 6
+  , "indirections" ~: runGetNumResult progInd ~=? 7
+  , "unary primitive (`negate`) w/o dump" ~: runGetNumResult progNeg1 ~=? (-3)
+  , "unary primitive (`negate`) w/ dump" ~: runGetNumResult progNeg2 ~=? 3
   , "unary primitive (`negate`) w/ indirection"
-  ~:  runGetResult progNeg3
+  ~:  runGetNumResult progNeg3
   ~=? (-3)
-  , "binary primitive" ~: runGetResult progArith1 ~=? 101
-  , "binary primitive 2" ~: runGetResult progArith2 ~=? (-3)
-  , "church" ~: runGetResult progChurch ~=? 4
-  , "cons" ~: runGetResult progCons ~=? 2
-  , "infinite streams (ones)" ~: runGetResult progInfinite1 ~=? 1
-  , "infinite streams (nats)" ~: runGetResult progInfinite2 ~=? 9
-  , "infinite streams (fibs)" ~: runGetResult progInfinite3 ~=? 34
+  , "binary primitive" ~: runGetNumResult progArith1 ~=? 101
+  , "binary primitive 2" ~: runGetNumResult progArith2 ~=? (-3)
+  , "church" ~: runGetNumResult progChurch ~=? 4
+  , "cons" ~: runGetNumResult progCons ~=? 2
+  , "infinite streams (ones)" ~: runGetNumResult progInfinite1 ~=? 1
+  , "infinite streams (nats)" ~: runGetNumResult progInfinite2 ~=? 9
+  , "infinite streams (fibs)" ~: runGetNumResult progInfinite3 ~=? 34
+  , "and F F" ~: not (runGetBoolResult progAnd1) ~? ""
+  , "and F T" ~: not (runGetBoolResult progAnd2) ~? ""
+  , "and T F" ~: not (runGetBoolResult progAnd3) ~? ""
+  , "and T T" ~: runGetBoolResult progAnd4 ~? ""
+  , "or F F" ~: not (runGetBoolResult progOr1) ~? ""
+  , "or F T" ~: runGetBoolResult progOr2 ~? ""
+  , "or T F" ~: runGetBoolResult progOr3 ~? ""
+  , "or T T" ~: runGetBoolResult progOr4 ~? ""
+  , "xor F F" ~: not (runGetBoolResult progXor1) ~? ""
+  , "xor F T" ~: runGetBoolResult progXor2 ~? ""
+  , "xor T F" ~: runGetBoolResult progXor3 ~? ""
+  , "xor T T" ~: not (runGetBoolResult progXor4) ~? ""
+  , "factorial" ~: runGetNumResult progFac ~=? 6
+  , "naive fib" ~: runGetNumResult progFib ~=? 8
   ]

@@ -4,6 +4,7 @@ module Main
 
 import           Options.Applicative
 
+import           CorePrelude
 import           Evaluators.TemplateInstantiation.Evaluator
 import           Evaluators.TemplateInstantiation.State
 import           Language
@@ -53,21 +54,22 @@ performCompileAndPrint FLCConfig { verbose = True } fileContents = mapM_
   verboseOutputs =
     [ ("Lexed tokens"          , show tokens)
     , ("Parsed AST"            , show program)
+    , ("Prelude", pprint $ preludeDefs ++ extraPreludeDefs)
     , ("Pretty-printed program", pprint program)
     , ("Evaluation trace"      , showResults results)
-    , ("Program output"        , show result)
+    , ("Program output"        , result)
     ]
   (tokens, program, results, result) = performCompile fileContents
-performCompileAndPrint _ fileContents = putStrLn $ show result
+performCompileAndPrint _ fileContents = putStrLn result
   where (_, _, _, result) = performCompile fileContents
 
 -- Helper to get outputs of compilation stages
 -- Note: separately lexes and parses each files, and joins together
 -- the scDefs into one program.
-performCompile :: [String] -> ([Token], CoreProgram, [TiState], Int)
+performCompile :: [String] -> ([Token], CoreProgram, [TiState], String)
 performCompile fileContents = (concat tokens, program, results, result)
  where
-  result  = getResult results
+  result  = showDataNode . getResult $ results
   results = eval . compile $ program
   program = concat asts
   asts    = syntax <$> tokens

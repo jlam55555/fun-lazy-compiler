@@ -2,10 +2,14 @@ module Evaluators.TemplateInstantiation.Evaluator
   ( run
   , runShowResult
   , runGetResult
+  , runGetNumResult
+  , runGetBoolResult
+  , runShowResultSimple
   , getResult
   , compile
   , eval
   , showResults
+  , showDataNode
   ) where
 
 import           Data.AssocList
@@ -30,18 +34,35 @@ run = eval . compile . parse
 runShowResult :: String -> String
 runShowResult = showResults . run
 
--- Get numeric result from program result
-getResult :: [TiState] -> Int
-getResult states = n
- where
-  NNum n            = hLookup h s
-  -- Non-exhaustive pattern should not fail because `eval` should always
-  -- return a singleton stack (the single element containing the result)
-  ([s], _, h, _, _) = last states
+-- Get data from program result
+getResult :: [TiState] -> Node
+getResult states = hLookup h s
+  where -- Non-exhaustive pattern should not fail because `eval` should always
+        -- return a singleton stack (the single element containing the result)
+        ([s], _, h, _, _) = last states
 
 -- Get result of running program
-runGetResult :: String -> Int
+runGetResult :: String -> Node
 runGetResult = getResult . run
+
+-- Get numeric result; useful for tests
+runGetNumResult :: String -> Int
+runGetNumResult = toNum . runGetResult
+ where
+  toNum (NNum n) = n
+  toNum _        = error "runGetNumResult: not a numeric result"
+
+-- Get boolean result; useful for tests
+runGetBoolResult :: String -> Bool
+runGetBoolResult = toNum . runGetResult
+ where
+  toNum b | b == trueNode  = True
+          | b == falseNode = False
+          | otherwise      = error "runGetBoolResult: not a boolean result"
+
+-- Print simple form of answer
+runShowResultSimple :: String -> String
+runShowResultSimple = showDataNode . runGetResult
 
 -- Translate the program into a form suitable for execution
 compile :: CoreProgram -> TiState

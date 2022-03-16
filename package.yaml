@@ -44,7 +44,7 @@ executables:
     - optparse-applicative >= 0.16 && <= 0.17
 
 tests:
-  fun-lazy-compiler-test:
+  flc-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:

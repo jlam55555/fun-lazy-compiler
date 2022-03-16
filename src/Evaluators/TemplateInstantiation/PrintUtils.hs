@@ -1,5 +1,6 @@
 module Evaluators.TemplateInstantiation.PrintUtils
   ( showResults
+  , showDataNode
   ) where
 
 import           Alloc
@@ -10,8 +11,15 @@ import           Evaluators.TemplateInstantiation.Node
 import           Evaluators.TemplateInstantiation.State
 import           Evaluators.TemplateInstantiation.Statistics
 
+-- Show the program result simply
+showDataNode :: Node -> String
+showDataNode (NNum n) = show n
+showDataNode node@(NData _ _) | node == trueNode  = "True"
+                              | node == falseNode = "False"
+                              | otherwise         = iDisplay . showNode $ node
+showDataNode _ = error "showDataNode: not a data node"
+
 -- Format the result of `eval` for printing.
--- TODO: move this to a different module
 showResults :: [TiState] -> String
 showResults states =
   iDisplay $ iConcat [iLayn $ showState <$> states, showStats $ last states]
