@@ -4,6 +4,9 @@ module Main
 
 import           Options.Applicative
 
+import           Control.Exception
+import           System.IO.Error
+
 import           CorePrelude
 import           Evaluators.TemplateInstantiation.Evaluator
 import           Evaluators.TemplateInstantiation.State
@@ -21,7 +24,7 @@ data FLCConfig = FLCConfig
 flcConfig :: Parser FLCConfig
 flcConfig =
   FLCConfig
-    <$> some (argument str (metavar "FILES" <> help "source files"))
+    <$> many (argument str (metavar "FILES" <> help "source files"))
     <*> switch
           (long "verbose" <> short 'v' <> help
             "Print extra debugging information"
@@ -39,10 +42,23 @@ main = getSourceFile =<< execParser opts
          "fun-lazy-compiler -- a compiler and runtime for the Core lazy functional language"
     )
   getSourceFile config = do
-    sources <- mapM getFileContents $ inputFiles config
+    sources <- mapM getFileContents $ addDefault $ inputFiles config
     performCompileAndPrint config sources
-  getFileContents "-" = getContents
+  getFileContents "-" = readStdin
   getFileContents s   = readFile s
+  -- If no files specified, read from stdin; same as
+  -- calling `flc -`
+  addDefault [] = ["-"]
+  addDefault f  = f
+
+-- Read until EOF from stdin; allows repeatedly reading from
+-- stdin, unlike `getContents`/other stdlib IO functions
+-- Source: https://stackoverflow.com/a/56223271
+readStdin :: IO String
+readStdin = go [] where
+  handler cs err | isEOFError err = return $ reverse cs
+                 | otherwise      = throwIO err
+  go cs = catch go' $ handler cs where go' = getChar >>= go . (: cs)
 
 -- Driver for executing the compilation stages and printing
 performCompileAndPrint :: FLCConfig -> [String] -> IO ()
