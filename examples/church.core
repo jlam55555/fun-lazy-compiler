@@ -1,4 +1,5 @@
 -- Church encoding of natural numbers.
+-- Requires TI Mark 4.
 Z f x = x ;
 S n f x = f (n f x) ;
 

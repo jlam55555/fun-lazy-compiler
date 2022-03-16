@@ -1,2 +1,3 @@
 -- Exercise 2.4
+-- Requires TI Mark 1.
 main = S K K 3

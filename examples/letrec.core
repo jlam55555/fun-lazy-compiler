@@ -1,5 +1,6 @@
 -- Show letrec functionality.
 -- Expected output: 6
+-- Requires TI Mark 2.
 pair x y f = f x y ;
 
 fst p = p K ;

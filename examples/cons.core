@@ -1,5 +1,6 @@
 -- This file will not compile standalone because there
 -- is no `main`. Need to include a driver file.
+-- Requires TI Mark 1.
 
 -- Church encoding for `cons`.
 cons x y z = z x y ;
