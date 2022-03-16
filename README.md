@@ -47,7 +47,7 @@ All Haskell code is auto-formatted using the [brittany][brittany] formatter.
 Sample source files are listed in the `examples/` directory.
 
 ```bash
-$ flc nats.core map.core pe1.core
+$ flc examples/nats.core examples/map.core examples/pe1.core
 233168
 ```
 
