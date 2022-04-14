@@ -102,14 +102,36 @@ push n s = s { gmStack = a : as }
   getArg (NAp _ a2) = a2
   getArg _          = error "push: attempt to retrieve arg of non-ap node"
 
+-- Allocate an application node from the top two items on the stack and
+-- push that onto the stack
 mkap :: GmStateT
-mkap = undefined
+mkap s = s { gmStack = a : as', gmHeap = h' }
+ where
+  (h', a)       = hAlloc (gmHeap s) $ NAp a1 a2
+  a1 : a2 : as' = gmStack s
 
+-- Moves the top element of the stack down n elements, discarding the
+-- other elements
 slide :: Int -> GmStateT
-slide = undefined
+slide n s = s { gmStack = a : drop n as } where a : as = gmStack s
 
+-- Unwind continues evaluation after the construction of a supercombinator:
+-- - If there is a number on top of the stack, then we're finished
+-- - If there is an application node on top of the stack, then we continue
+--   to unwind from the next node
+-- - If there is a global node on top of the stack, then we reduce the
+--   supercombinator. We check that there are enough nodes on the stack to
+--   perform the reduction
 unwind :: GmStateT
-unwind = undefined
+unwind s = newState $ hLookup h a
+ where
+  a : as = gmStack s
+  h      = gmHeap s
+  newState (NNum _  ) = s
+  newState (NAp a1 _) = s { gmCode = [Unwind], gmStack = a1 : a : as }
+  newState (NGlobal n c)
+    | length as < n = error "unwind: too few arguments to sc"
+    | otherwise     = s { gmCode = c }
 
 showResults :: [GmState] -> String
 showResults = undefined
