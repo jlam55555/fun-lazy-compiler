@@ -28,6 +28,7 @@ library
   exposed-modules:
       Alloc
       CorePrelude
+      Evaluator
       Evaluators.GMachine
       Evaluators.GMachine.Compiler
       Evaluators.GMachine.DumpAsm
@@ -58,27 +59,30 @@ library
       src
   build-depends:
       base >=4.7 && <5
-    , containers ==0.6
-    , hxt ==9.3
-    , sort ==1.0
-    , split ==0.2
+    , containers ==0.6.*
+    , hxt ==9.3.1.22
+    , sort ==1.0.0.0
+    , split ==0.2.3.4
   default-language: Haskell2010
 
 executable flc
   main-is: Main.hs
   other-modules:
+      Config
+      Driver
+      IOUtils
       Paths_fun_lazy_compiler
   hs-source-dirs:
       app
   ghc-options: -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , containers ==0.6
+    , containers ==0.6.*
     , fun-lazy-compiler
-    , hxt ==9.3
+    , hxt ==9.3.1.22
     , optparse-applicative >=0.16 && <=0.17
-    , sort ==1.0
-    , split ==0.2
+    , sort ==1.0.0.0
+    , split ==0.2.3.4
   default-language: Haskell2010
 
 test-suite flc-test
@@ -104,9 +108,9 @@ test-suite flc-test
   build-depends:
       HUnit ==1.6.2.0
     , base >=4.7 && <5
-    , containers ==0.6
+    , containers ==0.6.*
     , fun-lazy-compiler
-    , hxt ==9.3
-    , sort ==1.0
-    , split ==0.2
+    , hxt ==9.3.1.22
+    , sort ==1.0.0.0
+    , split ==0.2.3.4
   default-language: Haskell2010

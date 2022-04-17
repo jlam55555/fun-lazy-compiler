@@ -1,5 +1,6 @@
 module Evaluators.TemplateInstantiation
-  ( eval
+  ( TiState
+  , eval
   , compile
   , run
   , showTrace

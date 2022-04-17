@@ -1,7 +1,10 @@
 module Evaluators.GMachine
-  ( runProg
+  ( GmState
+  , runProg
+  , eval
   , compile
-  , showResults
+  , showTrace
+  , showOutput
   , exportAsm
   ) where
 
@@ -11,12 +14,7 @@ import           Evaluators.GMachine.Evaluator
 import           Evaluators.GMachine.PrintUtils
 import           Evaluators.GMachine.State
 
-import           Language
 import           Parser
 
 runProg :: String -> String
-runProg = showResults . eval . compile . parse
-
-compile :: CoreProgram -> GmState
-compile prog = GmState initialCode [] h e statInitial
-  where (h, e) = buildInitialHeap prog
+runProg = showTrace . eval . compile . parse

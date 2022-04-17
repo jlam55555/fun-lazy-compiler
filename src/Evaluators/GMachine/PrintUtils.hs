@@ -1,5 +1,6 @@
 module Evaluators.GMachine.PrintUtils
-  ( showResults
+  ( showTrace
+  , showOutput
   ) where
 
 import           Evaluators.GMachine.State
@@ -8,8 +9,15 @@ import           Alloc
 import           Iseq
 import           Language
 
-showResults :: [GmState] -> String
-showResults states = iDisplay $ iConcat
+showOutput :: [GmState] -> String
+showOutput trace = iDisplay $ showNode state a node
+ where
+  state = last trace
+  a : _ = gmStack state
+  node  = hLookup (gmHeap state) a
+
+showTrace :: [GmState] -> String
+showTrace states = iDisplay $ iConcat
   [ iStr "Supercombinator definitions"
   , iNewline
   , iInterleave iNewline $ showSC state <$> gmEnv state
