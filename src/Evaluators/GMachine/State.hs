@@ -19,7 +19,7 @@ data Instruction
 
 type GmStack = [Addr]
 type GmHeap = Heap Node
-type GmEnv = AssocList Name Addr
+type GmEnv a = AssocList Name a
 
 data Node
   = NNum Int           -- Numbers
@@ -44,7 +44,7 @@ data GmState = GmState
   { gmCode  :: GmCode
   , gmStack :: GmStack
   , gmHeap  :: GmHeap
-  , gmEnv   :: GmEnv
+  , gmEnv   :: GmEnv Addr
   , gmStats :: GmStats
   }
   deriving Show

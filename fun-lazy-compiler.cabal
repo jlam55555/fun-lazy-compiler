@@ -29,6 +29,9 @@ library
       Alloc
       CorePrelude
       Evaluators.GMachine
+      Evaluators.GMachine.Compiler
+      Evaluators.GMachine.Evaluator
+      Evaluators.GMachine.State
       Evaluators.TemplateInstantiation
       Evaluators.TemplateInstantiation.Evaluator
       Evaluators.TemplateInstantiation.Node
