@@ -8,12 +8,12 @@ import           Evaluators.GMachine.State
 import           Language
 
 eval :: GmState -> [GmState]
-eval s = s : restStates
+eval state = state : restStates
  where
-  restStates | gmFinal s = []
-             | otherwise = eval nextState
-  nextState = doAdmin $ step nextState
-  doAdmin s' = s' { gmStats = statIncSteps $ gmStats s' }
+  restStates | gmFinal state = []
+             | otherwise     = eval nextState
+  nextState = doAdmin $ step state
+  doAdmin state' = state' { gmStats = statIncSteps $ gmStats state' }
 
 -- Test if `GmState` is final
 gmFinal :: GmState -> Bool
@@ -21,7 +21,7 @@ gmFinal = null . gmCode
 
 -- Perform an evaluation step (perform the next instruction)
 step :: GmState -> GmState
-step s = dispatch i $ s { gmCode = is } where i : is = gmCode s
+step state = dispatch i $ state { gmCode = is } where i : is = gmCode state
 
 type GmStateT = GmState -> GmState
 
@@ -35,9 +35,10 @@ dispatch Mkap           = mkap
 
 -- Push global onto stack
 pushglobal :: Name -> GmStateT
-pushglobal f s = s { gmStack = a : gmStack s }
+pushglobal f state = state { gmStack = a : gmStack state }
  where
-  a = lookupDef (error $ "pushglobal: undeclared global: " ++ f) f $ gmEnv s
+  a =
+    lookupDef (error $ "pushglobal: undeclared global: " ++ f) f $ gmEnv state
 
 -- Allocate int and push onto stack
 pushint :: Int -> GmStateT
