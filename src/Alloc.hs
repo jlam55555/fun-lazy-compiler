@@ -1,6 +1,7 @@
 module Alloc
   ( Heap
   , Addr
+  , badAddr
   , hInitial
   , hAlloc
   , hUpdate
@@ -61,6 +62,9 @@ newtype Addr = Addr Int
 
 instance Show Addr where
   show (Addr a) = "#" ++ show a
+
+badAddr :: Addr
+badAddr = Addr (-1)
 
 hInitial :: Heap a
 hInitial = Heap (0, Addr <$> [1 ..], [], hStatsInitial)

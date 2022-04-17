@@ -51,7 +51,10 @@ showState state =
 showStack :: GmState -> Iseq
 showStack state = iConcat
   [ iStr " Stack:["
-  , iIndent $ iInterleave iNewline $ showStackItem state <$> gmStack state
+  , iIndent
+  $   iInterleave iNewline
+  $   showStackItem state
+  <$> (reverse $ gmStack state)
   , iStr "]"
   ]
 

@@ -41,26 +41,34 @@ pushglobal f state = state { gmStack = a : gmStack state }
     lookupDef (error $ "pushglobal: undeclared global: " ++ f) f $ gmEnv state
 
 -- Allocate int and push onto stack
+-- Exercise 3.6: Reuse number nodes
 pushint :: Int -> GmStateT
-pushint n s = s { gmStack = a : gmStack s, gmHeap = h' }
-  where (h', a) = hAlloc (gmHeap s) $ NNum n
+pushint n state
+  | a' /= badAddr = state { gmStack = a' : gmStack state }
+  | otherwise = state { gmStack = a : gmStack state
+                      , gmHeap  = h'
+                      , gmEnv   = (show n, a) : gmEnv state
+                      }
+ where
+  a'      = lookupDef badAddr (show n) $ gmEnv state
+  (h', a) = hAlloc (gmHeap state) $ NNum n
 
 -- Push n-th arg on stack onto stack
 push :: Int -> GmStateT
-push n s = s { gmStack = a : as }
+push n state = state { gmStack = a : as }
  where
-  as = gmStack s
-  a  = getArg $ hLookup (gmHeap s) $ as !! (n + 1)
+  as = gmStack state
+  a  = getArg $ hLookup (gmHeap state) $ as !! (n + 1)
   getArg (NAp _ a2) = a2
   getArg _          = error "push: attempt to retrieve arg of non-ap node"
 
 -- Allocate an application node from the top two items on the stack and
 -- push that onto the stack
 mkap :: GmStateT
-mkap s = s { gmStack = a : as', gmHeap = h' }
+mkap state = state { gmStack = a : as', gmHeap = h' }
  where
-  (h', a)       = hAlloc (gmHeap s) $ NAp a1 a2
-  a1 : a2 : as' = gmStack s
+  (h', a)       = hAlloc (gmHeap state) $ NAp a1 a2
+  a1 : a2 : as' = gmStack state
 
 -- Moves the top element of the stack down n elements, discarding the
 -- other elements

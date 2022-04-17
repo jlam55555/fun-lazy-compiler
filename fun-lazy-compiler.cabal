@@ -32,6 +32,7 @@ library
       Evaluators.GMachine.Compiler
       Evaluators.GMachine.DumpAsm
       Evaluators.GMachine.Evaluator
+      Evaluators.GMachine.PrintUtils
       Evaluators.GMachine.State
       Evaluators.TemplateInstantiation
       Evaluators.TemplateInstantiation.Evaluator
