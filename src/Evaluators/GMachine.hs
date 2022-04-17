@@ -8,6 +8,7 @@ module Evaluators.GMachine
 import           Evaluators.GMachine.Compiler
 import           Evaluators.GMachine.DumpAsm
 import           Evaluators.GMachine.Evaluator
+import           Evaluators.GMachine.PrintUtils
 import           Evaluators.GMachine.State
 
 import           Language
@@ -19,6 +20,3 @@ runProg = showResults . eval . compile . parse
 compile :: CoreProgram -> GmState
 compile prog = GmState initialCode [] h e statInitial
   where (h, e) = buildInitialHeap prog
-
-showResults :: [GmState] -> String
-showResults = undefined
