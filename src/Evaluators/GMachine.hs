@@ -1,6 +1,12 @@
-module Evaluators.GMachine where
+module Evaluators.GMachine
+  ( runProg
+  , compile
+  , showResults
+  , exportAsm
+  ) where
 
 import           Evaluators.GMachine.Compiler
+import           Evaluators.GMachine.DumpAsm
 import           Evaluators.GMachine.Evaluator
 import           Evaluators.GMachine.State
 

@@ -1,8 +1,15 @@
-module Evaluators.GMachine.Compiler where
+module Evaluators.GMachine.Compiler
+  ( compileSc
+  , buildInitialHeap
+  , initialCode
+  , GmCompiledSC
+  ) where
+
+import           Evaluators.GMachine.State
 
 import           Alloc
+import           CorePrelude
 import           Data.AssocList
-import           Evaluators.GMachine.State
 import           Language
 import           Utils
 
@@ -12,13 +19,16 @@ type GmCompiler = CoreExpr -> GmEnv Int -> GmCode
 
 buildInitialHeap :: CoreProgram -> (GmHeap, GmEnv Addr)
 buildInitialHeap prog = mapAccuml allocSc hInitial compiled
-  where compiled = map compileSc prog
+  where compiled = (compileSc <$> preludeDefs ++ prog) ++ compiledPrimitives
+
+compiledPrimitives :: [GmCompiledSC]
+compiledPrimitives = []
 
 allocSc :: GmHeap -> GmCompiledSC -> (GmHeap, (Name, Addr))
 allocSc h (f, nargs, is) = (h', (f, a))
   where (h', a) = hAlloc h $ NGlobal nargs is
 
-compileSc :: (Name, [Name], CoreExpr) -> GmCompiledSC
+compileSc :: CoreScDefn -> GmCompiledSC
 compileSc (f, env, body) = (f, length env, compileR body $ zip env [0 ..])
 
 compileR :: GmCompiler

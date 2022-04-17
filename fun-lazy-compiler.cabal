@@ -30,6 +30,7 @@ library
       CorePrelude
       Evaluators.GMachine
       Evaluators.GMachine.Compiler
+      Evaluators.GMachine.DumpAsm
       Evaluators.GMachine.Evaluator
       Evaluators.GMachine.State
       Evaluators.TemplateInstantiation

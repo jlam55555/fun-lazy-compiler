@@ -1,4 +1,6 @@
-module Evaluators.GMachine.Evaluator where
+module Evaluators.GMachine.Evaluator
+  ( eval
+  ) where
 
 import           Alloc
 import           Data.AssocList

@@ -1,4 +1,15 @@
-module Evaluators.GMachine.State where
+module Evaluators.GMachine.State
+  ( Instruction(..)
+  , GmCode
+  , GmStack
+  , GmHeap
+  , GmEnv
+  , GmState(..)
+  , Node(..)
+  , statInitial
+  , statIncSteps
+  , statGetSteps
+  ) where
 
 import           Alloc
 import           Data.AssocList
@@ -15,7 +26,15 @@ data Instruction
   | Push Int
   | Mkap
   | Slide Int
-  deriving (Show, Eq)
+  deriving Eq
+
+instance Show Instruction where
+  show Unwind         = "unwind"
+  show (Pushglobal n) = "pushglobal " ++ n
+  show (Pushint    n) = "pushint " ++ show n
+  show (Push       n) = "pusharg " ++ show n
+  show Mkap           = "mkap"
+  show (Slide n)      = "slide " ++ show n
 
 type GmStack = [Addr]
 type GmHeap = Heap Node
