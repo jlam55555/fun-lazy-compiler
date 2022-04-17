@@ -22,10 +22,10 @@ description:         Please see the README on GitHub at <https://github.com/jlam
 
 dependencies:
 - base >= 4.7 && < 5
-- sort == 1.0
-- containers == 0.6
-- hxt == 9.3               # for Data.AssocList
-- split == 0.2
+- sort == 1.0.0.0
+- containers == 0.6.*
+- hxt == 9.3.1.22               # for Data.AssocList
+- split == 0.2.3.4
 
 library:
   source-dirs: src
