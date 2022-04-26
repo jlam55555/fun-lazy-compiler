@@ -29,7 +29,8 @@ dispatch :: Instruction -> GmStateT
 dispatch (Pushglobal f) = pushglobal f
 dispatch (Pushint    n) = pushint n
 dispatch (Push       n) = push n
-dispatch (Slide      n) = slide n
+dispatch (Update     n) = update n
+dispatch (Pop        n) = pop n
 dispatch Unwind         = unwind
 dispatch Mkap           = mkap
 
@@ -70,10 +71,29 @@ mkap state = state { gmStack = a : as', gmHeap = h' }
   (h', a)       = hAlloc (gmHeap state) $ NAp a1 a2
   a1 : a2 : as' = gmStack state
 
--- Moves the top element of the stack down n elements, discarding the
--- other elements
-slide :: Int -> GmStateT
-slide n s = s { gmStack = a : drop n as } where a : as = gmStack s
+-- Remove n elements from the stack
+pop :: Int -> GmStateT
+pop n state = state { gmStack = drop n $ gmStack state }
+
+-- Helper function to replace the nth element of a list
+-- Similar to the `element` function of the `lens` package, without
+-- needing to include the `lens` package.
+-- `element`: https://stackoverflow.com/a/15531874/
+updateNth :: Int -> a -> [a] -> [a]
+updateNth _ _  []       = []
+updateNth 0 x' (_ : xs) = x' : xs
+updateNth n x' (x : xs) = x : updateNth (n - 1) x' xs
+
+-- Overwrite the (n+1)th stack item with an indirection to the item on
+-- the top of the stack, and remove the top element of the stack
+update :: Int -> GmStateT
+update n state = state { gmStack = updateNth n node nodes }
+  where node : nodes = gmStack state
+
+-- -- Moves the top element of the stack down n elements, discarding the
+-- -- other elements
+-- slide :: Int -> GmStateT
+-- slide n s = s { gmStack = a : drop n as } where a : as = gmStack s
 
 -- Unwind continues evaluation after the construction of a supercombinator:
 -- - If there is a number on top of the stack, then we're finished
@@ -82,13 +102,16 @@ slide n s = s { gmStack = a : drop n as } where a : as = gmStack s
 -- - If there is a global node on top of the stack, then we reduce the
 --   supercombinator. We check that there are enough nodes on the stack to
 --   perform the reduction
+-- - If there is an indirection on top of the stack, then we add the
+--   replace the top node with the indirection address.
 unwind :: GmStateT
-unwind s = newState $ hLookup h a
+unwind state = newState $ hLookup h a
  where
-  a : as = gmStack s
-  h      = gmHeap s
-  newState (NNum _  ) = s
-  newState (NAp a1 _) = s { gmCode = [Unwind], gmStack = a1 : a : as }
+  a : as = gmStack state
+  h      = gmHeap state
+  newState (NNum _  ) = state
+  newState (NAp a1 _) = state { gmCode = [Unwind], gmStack = a1 : a : as }
   newState (NGlobal n c)
     | length as < n = error "unwind: too few arguments to sc"
-    | otherwise     = s { gmCode = c }
+    | otherwise     = state { gmCode = c }
+  newState (NInd a') = state { gmStack = a' : as }

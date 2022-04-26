@@ -79,6 +79,7 @@ showNode state a (NGlobal _ _) = iConcat [iStr "Global ", iStr f]
   where f = head [ f' | (f', a') <- gmEnv state, a == a' ] -- reverse lookup
 showNode _ _ (NAp a1 a2) =
   iConcat [iStr "Ap ", showAddr a1, iStr " ", showAddr a2]
+showNode _ _ (NInd a) = iConcat [iStr "Ind ", showAddr a]
 
 showStats :: GmState -> Iseq
 showStats state =

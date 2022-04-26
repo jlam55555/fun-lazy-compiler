@@ -34,10 +34,11 @@ allocSc h (f, nargs, is) = (h', (f, a))
   where (h', a) = hAlloc h $ NGlobal nargs is
 
 compileSc :: CoreScDefn -> GmCompiledSC
-compileSc (f, env, body) = (f, length env, compileR body $ zip env [0 ..])
+compileSc (f, args, body) = (f, length args, compileR body $ zip args [0 ..])
 
 compileR :: GmCompiler
-compileR e env = compileC e env ++ [Slide $ length env + 1, Unwind]
+compileR e env = compileC e env ++ [Update d, Pop d, Unwind]
+  where d = length env
 
 compileC :: GmCompiler
 compileC (EVar x) env | n >= 0    = [Push n]

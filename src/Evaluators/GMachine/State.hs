@@ -25,7 +25,8 @@ data Instruction
   | Pushint Int
   | Push Int
   | Mkap
-  | Slide Int
+  | Update Int
+  | Pop Int
   deriving Eq
 
 instance Show Instruction where
@@ -34,7 +35,8 @@ instance Show Instruction where
   show (Pushint    n) = "pushint " ++ show n
   show (Push       n) = "pusharg " ++ show n
   show Mkap           = "mkap"
-  show (Slide n)      = "slide " ++ show n
+  show (Update n)     = "update " ++ show n
+  show (Pop    n)     = "pop " ++ show n
 
 type GmStack = [Addr]
 type GmHeap = Heap Node
@@ -44,6 +46,7 @@ data Node
   = NNum Int           -- Numbers
   | NAp Addr Addr      -- Fnaps
   | NGlobal Int GmCode -- Globals; replaces NSupercomb
+  | NInd Addr          -- Indirections
 
 -- Count evaluation steps
 type GmStats = Int
