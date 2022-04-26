@@ -75,20 +75,13 @@ mkap state = state { gmStack = a : as', gmHeap = h' }
 pop :: Int -> GmStateT
 pop n state = state { gmStack = drop n $ gmStack state }
 
--- Helper function to replace the nth element of a list
--- Similar to the `element` function of the `lens` package, without
--- needing to include the `lens` package.
--- `element`: https://stackoverflow.com/a/15531874/
-updateNth :: Int -> a -> [a] -> [a]
-updateNth _ _  []       = []
-updateNth 0 x' (_ : xs) = x' : xs
-updateNth n x' (x : xs) = x : updateNth (n - 1) x' xs
-
 -- Overwrite the (n+1)th stack item with an indirection to the item on
 -- the top of the stack, and remove the top element of the stack
 update :: Int -> GmStateT
-update n state = state { gmStack = updateNth n node nodes }
-  where node : nodes = gmStack state
+update n state = state { gmStack = as, gmHeap = h' }
+ where
+  a : as = gmStack state
+  h'     = hUpdate (gmHeap state) (as !! n) $ NInd a
 
 -- -- Moves the top element of the stack down n elements, discarding the
 -- -- other elements
@@ -114,4 +107,4 @@ unwind state = newState $ hLookup h a
   newState (NGlobal n c)
     | length as < n = error "unwind: too few arguments to sc"
     | otherwise     = state { gmCode = c }
-  newState (NInd a') = state { gmStack = a' : as }
+  newState (NInd a') = state { gmCode = [Unwind], gmStack = a' : as }
