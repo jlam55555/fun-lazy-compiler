@@ -27,6 +27,8 @@ data Instruction
   | Mkap
   | Update Int
   | Pop Int
+  | Alloc Int
+  | Slide Int
   deriving Eq
 
 instance Show Instruction where
@@ -37,6 +39,8 @@ instance Show Instruction where
   show Mkap           = "mkap"
   show (Update n)     = "update " ++ show n
   show (Pop    n)     = "pop " ++ show n
+  show (Alloc  n)     = "alloc " ++ show n
+  show (Slide  n)     = "slide " ++ show n
 
 type GmStack = [Addr]
 type GmHeap = Heap Node

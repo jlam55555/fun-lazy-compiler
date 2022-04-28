@@ -32,6 +32,8 @@ dispatch (Pushint    n) = pushint n
 dispatch (Push       n) = push n
 dispatch (Update     n) = update n
 dispatch (Pop        n) = pop n
+dispatch (Alloc      n) = alloc n
+dispatch (Slide      n) = slide n
 dispatch Unwind         = unwind
 dispatch Mkap           = mkap
 
@@ -80,10 +82,24 @@ update n state = state { gmStack = as, gmHeap = h' }
   a : as = gmStack state
   h'     = hUpdate (gmHeap state) (as !! n) $ NInd a
 
--- -- Moves the top element of the stack down n elements, discarding the
--- -- other elements
--- slide :: Int -> GmStateT
--- slide n s = s { gmStack = a : drop n as } where a : as = gmStack s
+-- Allocate n items on the stack (filled with arbitrary values)
+-- Implemented in Mark 3
+alloc :: Int -> GmStateT
+alloc n state = state { gmStack = s' ++ gmStack state, gmHeap = h' }
+  where (h', s') = allocNodes n $ gmHeap state
+
+-- Helper for `alloc`
+allocNodes :: Int -> GmHeap -> (GmHeap, [Addr])
+allocNodes 0 h = (h, [])
+allocNodes n h = (h'', a : as)
+ where
+  (h' , as) = allocNodes (n - 1) h
+  (h'', a ) = hAlloc h' $ NInd hNull
+
+-- Moves the top element of the stack down n elements, discarding the
+-- other elements
+slide :: Int -> GmStateT
+slide n state = state { gmStack = a : drop n as } where a : as = gmStack state
 
 -- Unwind continues evaluation after the construction of a supercombinator:
 -- - If there is a number on top of the stack, then we're finished
