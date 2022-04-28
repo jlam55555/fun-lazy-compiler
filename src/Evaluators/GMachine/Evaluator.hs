@@ -37,6 +37,12 @@ dispatch (Slide      n) = slide n
 dispatch Unwind         = unwind
 dispatch Mkap           = mkap
 dispatch Eval           = evalI
+dispatch Add            = arithmetic2 (+)
+dispatch Sub            = arithmetic2 (-)
+dispatch Mul            = arithmetic2 (*)
+dispatch Div            = arithmetic2 div
+dispatch Neg            = arithmetic1 negate
+dispatch (Cond _ _)     = error "dispatch: cond opcode not implemented"
 
 -- Push global onto stack
 pushglobal :: Name -> GmStateT
@@ -148,3 +154,46 @@ evalI state = state { gmCode = [Unwind], gmStack = [a], gmDump = d' }
  where
   d'        = (gmCode state, s) : gmDump state
   s@(a : _) = gmStack state
+
+-- Helper function for arithmetic operators: takes a number and an initial
+-- state, and returns a new state in which the number has been placed into the
+-- heap, and a pointer to this new node left on top of the stack.
+boxInteger :: Int -> GmState -> GmState
+boxInteger n state = state { gmStack = a : gmStack state, gmHeap = h' }
+  where (h', a) = hAlloc (gmHeap state) $ NNum n
+
+-- Helper function for arithmetic operators: takes an address and a state,
+-- and returns the number at that address
+unboxInteger :: Addr -> GmState -> Int
+unboxInteger a state = ub $ hLookup (gmHeap state) a
+ where
+  ub (NNum i) = i
+  ub _        = error "unboxInteger: unboxing a non-integer"
+
+-- Generic unary operator, introduced in Mark 4
+primitive1
+  :: (b -> GmState -> GmState) -- boxing function
+  -> (Addr -> GmState -> a)    -- unboxing function
+  -> (a -> b)                  -- operator
+  -> (GmState -> GmState)      -- state transition
+primitive1 box unbox op state = box (op $ unbox a state)
+  $ state { gmStack = as }
+  where a : as = gmStack state
+
+-- Generic binary operator, introduced in Mark 4
+primitive2
+  :: (b -> GmState -> GmState)
+  -> (Addr -> GmState -> a)
+  -> (a -> a -> b)
+  -> (GmState -> GmState)
+primitive2 box unbox op state =
+  box (op (unbox a0 state) (unbox a1 state)) $ state { gmStack = as }
+  where a0 : a1 : as = gmStack state
+
+-- Generic unary arithmetic
+arithmetic1 :: (Int -> Int) -> (GmState -> GmState)
+arithmetic1 = primitive1 boxInteger unboxInteger
+
+-- Generic binary arithmetic
+arithmetic2 :: (Int -> Int -> Int) -> (GmState -> GmState)
+arithmetic2 = primitive2 boxInteger unboxInteger
