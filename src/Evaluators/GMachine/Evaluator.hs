@@ -2,9 +2,10 @@ module Evaluators.GMachine.Evaluator
   ( eval
   ) where
 
+import           Evaluators.GMachine.State
+
 import           Alloc
 import           Data.AssocList
-import           Evaluators.GMachine.State
 import           Language
 
 eval :: GmState -> [GmState]
@@ -54,14 +55,10 @@ pushint n state
   a'      = lookupDef badAddr (show n) $ gmEnv state
   (h', a) = hAlloc (gmHeap state) $ NNum n
 
--- Push n-th arg on stack onto stack
+-- Push n-th stack item onto the stack
+-- Mark 3: use updated addressing mode
 push :: Int -> GmStateT
-push n state = state { gmStack = a : as }
- where
-  as = gmStack state
-  a  = getArg $ hLookup (gmHeap state) $ as !! (n + 1)
-  getArg (NAp _ a2) = a2
-  getArg _          = error "push: attempt to retrieve arg of non-ap node"
+push n state = state { gmStack = (as !! n) : as } where as = gmStack state
 
 -- Allocate an application node from the top two items on the stack and
 -- push that onto the stack
@@ -106,5 +103,16 @@ unwind state = newState $ hLookup h a
   newState (NAp a1 _) = state { gmCode = [Unwind], gmStack = a1 : a : as }
   newState (NGlobal n c)
     | length as < n = error "unwind: too few arguments to sc"
-    | otherwise     = state { gmCode = c }
+    | otherwise     = state { gmCode = c, gmStack = rearrange n state }
   newState (NInd a') = state { gmCode = [Unwind], gmStack = a' : as }
+
+-- Helper function to rearrange the stack for updated Unwind in Mark 3
+-- Exercise 3.12
+rearrange :: Int -> GmState -> GmStack
+rearrange n state = take n as' ++ drop n as
+ where
+  h   = gmHeap state
+  as  = gmStack state
+  as' = getArg . hLookup h <$> tail as
+  getArg (NAp _ arg) = arg
+  getArg _           = error "rearrange: non-ap node on stack during unwind"
