@@ -53,8 +53,14 @@ showInstructions is = iConcat
   ]
 
 showState :: GmState -> Iseq
-showState state =
-  iConcat [showStack state, iNewline, showInstructions $ gmCode state, iNewline]
+showState state = iConcat
+  [ showStack state
+  , iNewline
+  , showDump state
+  , iNewline
+  , showInstructions $ gmCode state
+  , iNewline
+  ]
 
 showStack :: GmState -> Iseq
 showStack state = iConcat
@@ -80,6 +86,29 @@ showNode state a (NGlobal _ _) = iConcat [iStr "Global ", iStr f]
 showNode _ _ (NAp a1 a2) =
   iConcat [iStr "Ap ", showAddr a1, iStr " ", showAddr a2]
 showNode _ _ (NInd a) = iConcat [iStr "Ind ", showAddr a]
+
+showDump :: GmState -> Iseq
+showDump state = iConcat
+  [ iStr "  Dump:["
+  , iIndent $ iInterleave iNewline $ showDumpItem <$> reverse (gmDump state)
+  , iStr "]"
+  ]
+
+showDumpItem :: GmDumpItem -> Iseq
+showDumpItem (is, s) = iConcat
+  [iStr "<", shortShowInstructions 3 is, iStr ",", shortShowStack s, iStr ">"]
+
+shortShowInstructions :: Int -> GmCode -> Iseq
+shortShowInstructions n is = iConcat
+  [iStr "{", iInterleave (iStr "; ") dotcodes, iStr "}"]
+ where
+  codes = iStr . show <$> take n is
+  dotcodes | length is > n = codes ++ [iStr "..."]
+           | otherwise     = codes
+
+shortShowStack :: GmStack -> Iseq
+shortShowStack s =
+  iConcat [iStr "[", iInterleave (iStr ", ") $ showAddr <$> s, iStr "]"]
 
 showStats :: GmState -> Iseq
 showStats state =

@@ -36,6 +36,7 @@ dispatch (Alloc      n) = alloc n
 dispatch (Slide      n) = slide n
 dispatch Unwind         = unwind
 dispatch Mkap           = mkap
+dispatch Eval           = evalI
 
 -- Push global onto stack
 pushglobal :: Name -> GmStateT
@@ -115,7 +116,15 @@ unwind state = newState $ hLookup h a
  where
   a : as = gmStack state
   h      = gmHeap state
-  newState (NNum _  ) = state
+  d      = gmDump state
+
+  -- Mark 4: NNum is final if the dump is empty, otherwise we pop a dumpItem
+  -- from the stack
+  newState (NNum _) = newState' d
+   where
+    newState' []            = state
+    newState' ((is, s) : _) = state { gmCode = is, gmStack = a : s }
+
   newState (NAp a1 _) = state { gmCode = [Unwind], gmStack = a1 : a : as }
   newState (NGlobal n c)
     | length as < n = error "unwind: too few arguments to sc"
@@ -132,3 +141,10 @@ rearrange n state = take n as' ++ drop n as
   as' = getArg . hLookup h <$> tail as
   getArg (NAp _ arg) = arg
   getArg _           = error "rearrange: non-ap node on stack during unwind"
+
+-- Eval opcode, introduced in Mark 4
+evalI :: GmStateT
+evalI state = state { gmCode = [Unwind], gmStack = [a], gmDump = d' }
+ where
+  d'        = (gmCode state, s) : gmDump state
+  s@(a : _) = gmStack state

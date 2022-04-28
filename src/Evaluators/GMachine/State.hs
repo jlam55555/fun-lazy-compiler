@@ -2,6 +2,8 @@ module Evaluators.GMachine.State
   ( Instruction(..)
   , GmCode
   , GmStack
+  , GmDump
+  , GmDumpItem
   , GmHeap
   , GmEnv
   , GmState(..)
@@ -29,6 +31,9 @@ data Instruction
   | Pop Int
   | Alloc Int
   | Slide Int
+  | Eval
+  | Add | Sub | Mul | Div | Neg
+  | Cond GmCode GmCode
   deriving Eq
 
 instance Show Instruction where
@@ -41,10 +46,21 @@ instance Show Instruction where
   show (Pop    n)     = "pop " ++ show n
   show (Alloc  n)     = "alloc " ++ show n
   show (Slide  n)     = "slide " ++ show n
+  show Eval           = "eval"
+  show Add            = "add"
+  show Sub            = "sub"
+  show Mul            = "mul"
+  show Div            = "div"
+  show Neg            = "neg"
+  -- TODO: cond has gmCode subexpressions, need to print them out later
+  show (Cond _ _)     = "cond"
 
 type GmStack = [Addr]
 type GmHeap = Heap Node
 type GmEnv a = AssocList Name a
+
+type GmDump = [GmDumpItem]
+type GmDumpItem = (GmCode, GmStack)
 
 data Node
   = NNum Int           -- Numbers
@@ -69,6 +85,7 @@ statGetSteps = id
 data GmState = GmState
   { gmCode  :: GmCode
   , gmStack :: GmStack
+  , gmDump  :: GmDump
   , gmHeap  :: GmHeap
   , gmEnv   :: GmEnv Addr
   , gmStats :: GmStats

@@ -19,7 +19,7 @@ type GmCompiledSC = (Name, Int, GmCode)
 type GmCompiler = CoreExpr -> GmEnv Int -> GmCode
 
 compile :: CoreProgram -> GmState
-compile prog = GmState initialCode [] h e statInitial
+compile prog = GmState initialCode [] [] h e statInitial
   where (h, e) = buildInitialHeap prog
 
 buildInitialHeap :: CoreProgram -> (GmHeap, GmEnv Addr)
