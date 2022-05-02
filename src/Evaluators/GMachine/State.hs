@@ -33,6 +33,7 @@ data Instruction
   | Slide Int
   | Eval
   | Add | Sub | Mul | Div | Neg
+  | Eq | Ne | Lt | Le | Gt | Ge
   | Cond GmCode GmCode
   deriving Eq
 
@@ -52,6 +53,12 @@ instance Show Instruction where
   show Mul            = "mul"
   show Div            = "div"
   show Neg            = "neg"
+  show Eq             = "eq"
+  show Ne             = "ne"
+  show Lt             = "lt"
+  show Le             = "le"
+  show Gt             = "gt"
+  show Ge             = "ge"
   -- TODO: cond has gmCode subexpressions, need to print them out later
   show (Cond _ _)     = "cond"
 

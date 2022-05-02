@@ -27,7 +27,26 @@ buildInitialHeap prog = mapAccuml allocSc hInitial compiled
   where compiled = (compileSc <$> preludeDefs ++ prog) ++ compiledPrimitives
 
 compiledPrimitives :: [GmCompiledSC]
-compiledPrimitives = []
+compiledPrimitives =
+  [ compile2 "+" Add
+  , compile2 "-" Sub
+  , compile2 "*" Mul
+  , compile2 "/" Div
+  , compile1 "negate" Neg
+  , compile2 "==" Eq
+  , compile2 "~=" Ne
+  , compile2 "<"  Lt
+  , compile2 "<=" Le
+  , compile2 ">"  Gt
+  , compile2 ">=" Ge
+  , compiledIf
+  ]
+ where
+  compile2 op opcode =
+    (op, 2, [Push 1, Eval, Push 1, Eval, opcode, Update 2, Pop 2, Unwind])
+  compile1 op opcode = (op, 1, [Push 0, Eval, opcode, Update 1, Pop 1, Unwind])
+  compiledIf =
+    ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
 
 allocSc :: GmHeap -> GmCompiledSC -> (GmHeap, (Name, Addr))
 allocSc h (f, nargs, is) = (h', (f, a))
@@ -93,4 +112,4 @@ argOffset :: Int -> GmEnv Int -> GmEnv Int
 argOffset n env = [ (v, n + m) | (v, m) <- env ]
 
 initialCode :: GmCode
-initialCode = [Pushglobal "main", Unwind]
+initialCode = [Pushglobal "main", Eval]

@@ -42,7 +42,13 @@ dispatch Sub            = arithmetic2 (-)
 dispatch Mul            = arithmetic2 (*)
 dispatch Div            = arithmetic2 div
 dispatch Neg            = arithmetic1 negate
-dispatch (Cond _ _)     = error "dispatch: cond opcode not implemented"
+dispatch Eq             = comparison (==)
+dispatch Ne             = comparison (/=)
+dispatch Lt             = comparison (<)
+dispatch Le             = comparison (<=)
+dispatch Gt             = comparison (>)
+dispatch Ge             = comparison (>=)
+dispatch (Cond t f)     = cond t f
 
 -- Push global onto stack
 pushglobal :: Name -> GmStateT
@@ -128,8 +134,8 @@ unwind state = newState $ hLookup h a
   -- from the stack
   newState (NNum _) = newState' d
    where
-    newState' []            = state
-    newState' ((is, s) : _) = state { gmCode = is, gmStack = a : s }
+    newState' []             = state
+    newState' ((is, s) : d') = state { gmCode = is, gmStack = s, gmDump = d' }
 
   newState (NAp a1 _) = state { gmCode = [Unwind], gmStack = a1 : a : as }
   newState (NGlobal n c)
@@ -155,6 +161,17 @@ evalI state = state { gmCode = [Unwind], gmStack = [a], gmDump = d' }
   d'        = (gmCode state, s) : gmDump state
   s@(a : _) = gmStack state
 
+-- Cond opcode, introduced in Mark 4
+cond :: GmCode -> GmCode -> GmStateT
+cond t f state = state { gmCode = branch ++ is, gmStack = as }
+ where
+  is     = gmCode state
+  a : as = gmStack state
+  branch = getBranch $ hLookup (gmHeap state) a
+  getBranch (NNum 1) = t
+  getBranch (NNum 0) = f
+  getBranch _        = error "cond: top of stack is not boolean"
+
 -- Helper function for arithmetic operators: takes a number and an initial
 -- state, and returns a new state in which the number has been placed into the
 -- heap, and a pointer to this new node left on top of the stack.
@@ -169,6 +186,13 @@ unboxInteger a state = ub $ hLookup (gmHeap state) a
  where
   ub (NNum i) = i
   ub _        = error "unboxInteger: unboxing a non-integer"
+
+-- Similar to `boxInteger`, but takes booleans and stores them as integers
+boxBoolean :: Bool -> GmState -> GmState
+boxBoolean b = boxInteger b'
+ where
+  b' | b         = 1
+     | otherwise = 0
 
 -- Generic unary operator, introduced in Mark 4
 primitive1
@@ -197,3 +221,7 @@ arithmetic1 = primitive1 boxInteger unboxInteger
 -- Generic binary arithmetic
 arithmetic2 :: (Int -> Int -> Int) -> (GmState -> GmState)
 arithmetic2 = primitive2 boxInteger unboxInteger
+
+-- Generic comparison function
+comparison :: (Int -> Int -> Bool) -> GmState -> GmState
+comparison = primitive2 boxBoolean unboxInteger
