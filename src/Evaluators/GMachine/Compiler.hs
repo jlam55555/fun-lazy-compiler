@@ -112,4 +112,4 @@ argOffset :: Int -> GmEnv Int -> GmEnv Int
 argOffset n env = [ (v, n + m) | (v, m) <- env ]
 
 initialCode :: GmCode
-initialCode = [Pushglobal "main", Eval]
+initialCode = [Pushglobal "main", Unwind]

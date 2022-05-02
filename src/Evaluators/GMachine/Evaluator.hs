@@ -134,8 +134,9 @@ unwind state = newState $ hLookup h a
   -- from the stack
   newState (NNum _) = newState' d
    where
-    newState' []             = state
-    newState' ((is, s) : d') = state { gmCode = is, gmStack = s, gmDump = d' }
+    newState' [] = state
+    newState' ((is, s) : d') =
+      state { gmCode = is, gmStack = a : s, gmDump = d' }
 
   newState (NAp a1 _) = state { gmCode = [Unwind], gmStack = a1 : a : as }
   newState (NGlobal n c)
@@ -158,8 +159,8 @@ rearrange n state = take n as' ++ drop n as
 evalI :: GmStateT
 evalI state = state { gmCode = [Unwind], gmStack = [a], gmDump = d' }
  where
-  d'        = (gmCode state, s) : gmDump state
-  s@(a : _) = gmStack state
+  d'    = (gmCode state, s) : gmDump state
+  a : s = gmStack state
 
 -- Cond opcode, introduced in Mark 4
 cond :: GmCode -> GmCode -> GmStateT
