@@ -2,6 +2,7 @@ module Evaluators.GMachine.DumpAsm
   ( exportAsm
   ) where
 
+import           Evaluators.GMachine.PrintUtils ( )
 import           Evaluators.GMachine.State
 
 import           Alloc

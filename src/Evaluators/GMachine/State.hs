@@ -35,32 +35,13 @@ data Instruction
   | Add | Sub | Mul | Div | Neg
   | Eq | Ne | Lt | Le | Gt | Ge
   | Cond GmCode GmCode
+  | Pack Int Int
+  | Casejump [(Int, GmCode)]
+  | Split Int
+  | Print
   deriving Eq
 
-instance Show Instruction where
-  show Unwind         = "unwind"
-  show (Pushglobal n) = "pushglobal " ++ n
-  show (Pushint    n) = "pushint " ++ show n
-  show (Push       n) = "pusharg " ++ show n
-  show Mkap           = "mkap"
-  show (Update n)     = "update " ++ show n
-  show (Pop    n)     = "pop " ++ show n
-  show (Alloc  n)     = "alloc " ++ show n
-  show (Slide  n)     = "slide " ++ show n
-  show Eval           = "eval"
-  show Add            = "add"
-  show Sub            = "sub"
-  show Mul            = "mul"
-  show Div            = "div"
-  show Neg            = "neg"
-  show Eq             = "eq"
-  show Ne             = "ne"
-  show Lt             = "lt"
-  show Le             = "le"
-  show Gt             = "gt"
-  show Ge             = "ge"
-  -- TODO: cond has gmCode subexpressions, need to print them out later
-  show (Cond _ _)     = "cond"
+type GmOutput = String
 
 type GmStack = [Addr]
 type GmHeap = Heap Node
@@ -74,6 +55,7 @@ data Node
   | NAp Addr Addr      -- Fnaps
   | NGlobal Int GmCode -- Globals; replaces NSupercomb
   | NInd Addr          -- Indirections
+  | NConstr Int [Addr] -- Structured data
 
 -- Count evaluation steps
 type GmStats = Int
@@ -90,11 +72,11 @@ statGetSteps = id
 -- G-Machine state
 -- Deviating from the book to use record syntax
 data GmState = GmState
-  { gmCode  :: GmCode
-  , gmStack :: GmStack
-  , gmDump  :: GmDump
-  , gmHeap  :: GmHeap
-  , gmEnv   :: GmEnv Addr
-  , gmStats :: GmStats
+  { gmOutput :: GmOutput
+  , gmCode   :: GmCode
+  , gmStack  :: GmStack
+  , gmDump   :: GmDump
+  , gmHeap   :: GmHeap
+  , gmEnv    :: GmEnv Addr
+  , gmStats  :: GmStats
   }
-  deriving Show

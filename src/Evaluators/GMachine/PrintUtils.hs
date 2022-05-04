@@ -1,3 +1,6 @@
+{-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Evaluators.GMachine.PrintUtils
   ( showTrace
   , showOutput
@@ -8,6 +11,46 @@ import           Evaluators.GMachine.State
 import           Alloc
 import           Iseq
 import           Language
+
+instance Show Instruction where
+  show Unwind         = "unwind"
+  show (Pushglobal n) = "pushglobal " ++ n
+  show (Pushint    n) = "pushint " ++ show n
+  show (Push       n) = "pusharg " ++ show n
+  show Mkap           = "mkap"
+  show (Update n)     = "update " ++ show n
+  show (Pop    n)     = "pop " ++ show n
+  show (Alloc  n)     = "alloc " ++ show n
+  show (Slide  n)     = "slide " ++ show n
+  show Eval           = "eval"
+  show Add            = "add"
+  show Sub            = "sub"
+  show Mul            = "mul"
+  show Div            = "div"
+  show Neg            = "neg"
+  show Eq             = "eq"
+  show Ne             = "ne"
+  show Lt             = "lt"
+  show Le             = "le"
+  show Gt             = "gt"
+  show Ge             = "ge"
+  show (Cond t f)     = iDisplay $ iConcat
+    [ iStr "cond t"
+    , iIndent $ shortShowInstructions 3 t
+    , iNewline
+    , iStr "     f"
+    , iIndent $ shortShowInstructions 3 f
+    ]
+  show (Pack t n      ) = "pack " ++ show t ++ " " ++ show n
+  show (Casejump rules) = iDisplay $ iConcat
+    [ iStr "casejump ["
+    , iIndent $ iInterleave iNewline $ showRule <$> rules
+    , iStr "]"
+    ]
+   where
+    showRule (t, c) = iConcat [iNum t, iStr " -> ", shortShowInstructions 3 c]
+  show (Split n) = "split " ++ show n
+  show Print     = "print"
 
 showOutput :: [GmState] -> String
 showOutput trace = iDisplay $ showNode state a node
@@ -54,13 +97,21 @@ showInstructions is = iConcat
 
 showState :: GmState -> Iseq
 showState state = iConcat
-  [ showStack state
+  [ showOutput' state
+  , iNewline
+  , showStack state
   , iNewline
   , showDump state
   , iNewline
   , showInstructions $ gmCode state
   , iNewline
   ]
+
+-- Show the GmOutput (different from `showOutput`, which is part of the
+-- interface for the compiler); introduced in Mark 6
+showOutput' :: GmState -> Iseq
+showOutput' state =
+  iConcat [iStr "Output:\"", iStr $ gmOutput state, iStr "\""]
 
 showStack :: GmState -> Iseq
 showStack state = iConcat
@@ -85,7 +136,14 @@ showNode state a (NGlobal _ _) = iConcat [iStr "Global ", iStr f]
   where f = head [ f' | (f', a') <- gmEnv state, a == a' ] -- reverse lookup
 showNode _ _ (NAp a1 a2) =
   iConcat [iStr "Ap ", showAddr a1, iStr " ", showAddr a2]
-showNode _ _ (NInd a) = iConcat [iStr "Ind ", showAddr a]
+showNode _ _ (NInd a      ) = iConcat [iStr "Ind ", showAddr a]
+showNode _ _ (NConstr t as) = iConcat
+  [ iStr "Constr "
+  , iNum t
+  , iStr " ["
+  , iInterleave (iStr ", ") $ showAddr <$> as
+  , iStr "]"
+  ]
 
 showDump :: GmState -> Iseq
 showDump state = iConcat
