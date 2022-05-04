@@ -27,28 +27,32 @@ step state = dispatch i $ state { gmCode = is } where i : is = gmCode state
 type GmStateT = GmState -> GmState
 
 dispatch :: Instruction -> GmStateT
-dispatch (Pushglobal f) = pushglobal f
-dispatch (Pushint    n) = pushint n
-dispatch (Push       n) = push n
-dispatch (Update     n) = update n
-dispatch (Pop        n) = pop n
-dispatch (Alloc      n) = alloc n
-dispatch (Slide      n) = slide n
-dispatch Unwind         = unwind
-dispatch Mkap           = mkap
-dispatch Eval           = evalI
-dispatch Add            = arithmetic2 (+)
-dispatch Sub            = arithmetic2 (-)
-dispatch Mul            = arithmetic2 (*)
-dispatch Div            = arithmetic2 div
-dispatch Neg            = arithmetic1 negate
-dispatch Eq             = comparison (==)
-dispatch Ne             = comparison (/=)
-dispatch Lt             = comparison (<)
-dispatch Le             = comparison (<=)
-dispatch Gt             = comparison (>)
-dispatch Ge             = comparison (>=)
-dispatch (Cond t f)     = cond t f
+dispatch (Pushglobal f)   = pushglobal f
+dispatch (Pushint    n)   = pushint n
+dispatch (Push       n)   = push n
+dispatch (Update     n)   = update n
+dispatch (Pop        n)   = pop n
+dispatch (Alloc      n)   = alloc n
+dispatch (Slide      n)   = slide n
+dispatch Unwind           = unwind
+dispatch Mkap             = mkap
+dispatch Eval             = evalI
+dispatch Add              = arithmetic2 (+)
+dispatch Sub              = arithmetic2 (-)
+dispatch Mul              = arithmetic2 (*)
+dispatch Div              = arithmetic2 div
+dispatch Neg              = arithmetic1 negate
+dispatch Eq               = comparison (==)
+dispatch Ne               = comparison (/=)
+dispatch Lt               = comparison (<)
+dispatch Le               = comparison (<=)
+dispatch Gt               = comparison (>)
+dispatch Ge               = comparison (>=)
+dispatch (Cond t f      ) = cond t f
+dispatch (Pack t n      ) = pack t n
+dispatch (Casejump rules) = casejump rules
+dispatch (Split    n    ) = split n
+dispatch Print            = printI
 
 -- Push global onto stack
 pushglobal :: Name -> GmStateT
@@ -130,14 +134,16 @@ unwind state = newState $ hLookup h a
   h      = gmHeap state
   d      = gmDump state
 
+  dataNodeState [] = state
+  dataNodeState ((is, s) : d') =
+    state { gmCode = is, gmStack = a : s, gmDump = d' }
+
   -- Mark 4: NNum is final if the dump is empty, otherwise we pop a dumpItem
-  -- from the stack
-  newState (NNum _) = newState' d
-   where
-    newState' [] = state
-    newState' ((is, s) : d') =
-      state { gmCode = is, gmStack = a : s, gmDump = d' }
-  newState (NAp a1 _) = state { gmCode = [Unwind], gmStack = a1 : a : as }
+  -- from the stack;
+  -- Mark 6: NConstr is treated the same as NNum
+  newState (NNum _      ) = dataNodeState d
+  newState (NConstr _  _) = dataNodeState d
+  newState (NAp     a1 _) = state { gmCode = [Unwind], gmStack = a1 : a : as }
   -- Mark 5: unwinding may be necessary if a function does not directly
   -- evaluate to a number
   newState (NGlobal n c)
@@ -231,3 +237,43 @@ arithmetic2 = primitive2 boxInteger unboxInteger
 -- Generic comparison function
 comparison :: (Int -> Int -> Bool) -> GmState -> GmState
 comparison = primitive2 boxBoolean unboxInteger
+
+-- Structured data constructor; assumes saturated constructor;
+-- Introduced in Mark 6
+pack :: Int -> Int -> GmStateT
+pack t n state = state { gmStack = a : drop n s, gmHeap = h' }
+ where
+  s       = gmStack state
+  (h', a) = hAlloc (gmHeap state) $ NConstr t $ take n s
+
+-- Case instruction; introduced in Mark 6; assumes element on top
+-- of stack is a structured data element
+casejump :: [(Int, GmCode)] -> GmStateT
+casejump rules state = state { gmCode = is' ++ gmCode state }
+ where
+  a :          _ = gmStack state
+  ( NConstr t _) = hLookup (gmHeap state) a
+  is'            = lookupDef (error "casejump: failed match") t rules
+
+-- Split instruction; introduced in Mark 6; puts the arguments
+-- of the sructured data onto the stack; don't actually need n
+split :: Int -> GmStateT
+split _ state = state { gmStack = args ++ as }
+ where
+  a :             as = gmStack state
+  ( NConstr _ args)  = hLookup (gmHeap state) a
+
+-- Print instruction; introduced in Mark 6; recursively evaluates
+-- arguments of a structured data for printing
+printI :: GmStateT
+printI state = state { gmCode = is', gmOutput = o', gmStack = s' }
+ where
+  a : as        = gmStack state
+  node          = hLookup (gmHeap state) a
+  -- Updated stack and instructions depends on the data node
+  (is', o', s') = printI' node
+  printI' (NNum n) = (gmCode state, gmOutput state ++ " " ++ show n, as)
+  printI' (NConstr _ args) =
+    (printIs (length args) ++ gmCode state, gmOutput state, args ++ as)
+    where printIs n = concat $ take n $ repeat [Eval, Print]
+  printI' _ = error "print: non-data node"
