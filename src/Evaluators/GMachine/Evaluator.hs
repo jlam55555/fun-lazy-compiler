@@ -137,11 +137,16 @@ unwind state = newState $ hLookup h a
     newState' [] = state
     newState' ((is, s) : d') =
       state { gmCode = is, gmStack = a : s, gmDump = d' }
-
   newState (NAp a1 _) = state { gmCode = [Unwind], gmStack = a1 : a : as }
+  -- Mark 5: unwinding may be necessary if a function does not directly
+  -- evaluate to a number
   newState (NGlobal n c)
-    | length as < n = error "unwind: too few arguments to sc"
-    | otherwise     = state { gmCode = c, gmStack = rearrange n state }
+    | length as < n = state { gmCode  = is
+                            , gmStack = last (gmStack state) : s
+                            , gmDump  = d'
+                            }
+    | otherwise = state { gmCode = c, gmStack = rearrange n state }
+    where ((is, s) : d') = d
   newState (NInd a') = state { gmCode = [Unwind], gmStack = a' : as }
 
 -- Helper function to rearrange the stack for updated Unwind in Mark 3

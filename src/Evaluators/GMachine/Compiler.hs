@@ -48,6 +48,21 @@ compiledPrimitives =
   compiledIf =
     ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
 
+-- Introduced in Mark 5 with strict evaluation contexts
+builtInBinary :: AssocList Name Instruction
+builtInBinary =
+  [ ("+" , Add)
+  , ("-" , Sub)
+  , ("*" , Mul)
+  , ("/" , Div)
+  , ("==", Eq)
+  , ("~=", Ne)
+  , (">=", Ge)
+  , (">" , Gt)
+  , ("<=", Le)
+  , ("<" , Lt)
+  ]
+
 allocSc :: GmHeap -> GmCompiledSC -> (GmHeap, (Name, Addr))
 allocSc h (f, nargs, is) = (h', (f, a))
   where (h', a) = hAlloc h $ NGlobal nargs is
@@ -55,10 +70,34 @@ allocSc h (f, nargs, is) = (h', (f, a))
 compileSc :: CoreScDefn -> GmCompiledSC
 compileSc (f, args, body) = (f, length args, compileR body $ zip args [0 ..])
 
+-- R compilation scheme is driver for supercombinator compilation.
+-- I've found that this is called the F compilation scheme in another
+-- document, "Efficient compilation of lazy evaluation"
 compileR :: GmCompiler
-compileR e env = compileC e env ++ [Update d, Pop d, Unwind]
+compileR e env = compileE e env ++ [Update d, Pop d, Unwind]
   where d = length env
 
+-- E compilation scheme compiles in a strict context (to WHNF)
+-- (introduced in Mark 5)
+compileE :: GmCompiler
+-- Numbers are already in WHNF, return them
+compileE (ENum n) _ = [Pushint n]
+-- For let bindings, we can evaluate the body in a strict context
+compileE (ELet isRec defs e) env | isRec     = compileLetrec compileE defs e env
+                                 | otherwise = compileLet compileE defs e env
+-- Arithmetic in a strict evaluation context is simplified
+compileE (EAp (EAp (EVar binOp) e0) e1) env | hasEntry binOp builtInBinary =
+  compileE e1 env
+    ++ compileE e0 (argOffset 1 env)
+    ++ [lookupDef Add binOp builtInBinary]
+compileE (EAp (EVar "negate") e) env = compileE e env ++ [Neg]
+-- Conditionals may be compiled in a strict context
+compileE (EAp (EAp (EAp (EVar "if") e0) e1) e2) env =
+  compileE e0 env ++ [Cond (compileE e1 env) (compileE e2 env)]
+-- Fallback case: evaluate other expressions in a non-strict context
+compileE e env = compileC e env ++ [Eval]
+
+-- C compilation scheme compiles in a lazy context
 compileC :: GmCompiler
 compileC (EVar x) env | n >= 0    = [Push n]
                       | otherwise = [Pushglobal x]
