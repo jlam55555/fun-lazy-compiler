@@ -194,8 +194,8 @@ compileA offset e env = [Split offset] ++ compileE e env ++ [Slide offset]
 argOffset :: Int -> GmEnv Int -> GmEnv Int
 argOffset n env = [ (v, n + m) | (v, m) <- env ]
 
--- Exercise 3.26: why has the initial code sequence changed? I'm still not sure
--- why the Unwind should be changed to Eval. I believe that this should always
--- fully evaluate the result to WHNF
+-- Exercise 3.26: I believe that we have to change unwind to eval because unwind
+-- erases the stack, and we need the extra print statement at the end; however,
+-- printing comes up a few marks later than this question, so I'm not sure
 initialCode :: GmCode
-initialCode = [Pushglobal "main", Unwind, Print]
+initialCode = [Pushglobal "main", Eval, Print]
