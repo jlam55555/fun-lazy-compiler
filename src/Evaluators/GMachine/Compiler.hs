@@ -94,6 +94,9 @@ compileE (EAp (EVar "negate") e) env = compileE e env ++ [Neg]
 -- Conditionals may be compiled in a strict context
 compileE (EAp (EAp (EAp (EVar "if") e0) e1) e2) env =
   compileE e0 env ++ [Cond (compileE e1 env) (compileE e2 env)]
+-- Structured data; introduced in Mark 6
+compileE (ECase scrut rules) env =
+  compileE scrut env ++ [Casejump $ compileD compileA rules env]
 -- Fallback case: evaluate other expressions in a non-strict context
 compileE e env = compileC e env ++ [Eval]
 
@@ -103,11 +106,33 @@ compileC (EVar x) env | n >= 0    = [Push n]
                       | otherwise = [Pushglobal x]
   where n = lookupDef (-1) x env
 compileC (ENum n) _ = [Pushint n]
-compileC (EAp e1 e2) env =
-  compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
 compileC (ELet isRec defs e) env | isRec     = compileLetrec compileC defs e env
                                  | otherwise = compileLet compileC defs e env
-compileC _ _ = error "compileC: unimplemented expression form"
+-- Mark 6: need to handle constructors
+compileC e@(EAp e1 e2) env
+  | saturatedConstr $ spine = compiledConstr
+  | otherwise = compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
+ where
+  -- Compiled code if constructor
+  compiledConstr = compileConstr (reverse spine) env
+  compileConstr [EConstr t a] _ = [Pack t a]
+  compileConstr (e' : es) env' =
+    compileC e' env' ++ compileConstr es (argOffset 1 env')
+  compileConstr _ _ = error "compileC: spine error"
+  -- Detects whether to compile a constructor or fnap
+  saturatedConstr (EConstr _ a : es) = a == length es
+  saturatedConstr _                  = False
+  -- Gets spine for `saturatedConstr`
+  spine = spine' e
+  spine' (EAp e1' e2') = spine' e1' ++ [e2']
+  spine' e'            = [e']
+-- Special handling for nullary constructors
+compileC (EConstr t 0) _ = [Pack t 0]
+-- Other forms are invalid; they can only be reached via program transformations
+compileC (EConstr _ _) _ =
+  error "compileC: constr incorrectly tagged with 0 args"
+compileC (ECase _ _) _ = error "compileC: case in non-strict context"
+compileC (ELam  _ _) _ = error "compileC: lambda not implemented"
 
 -- Compile a letrec expression
 compileLetrec :: GmCompiler -> [(Name, CoreExpr)] -> GmCompiler
@@ -146,9 +171,31 @@ compileArgs defs env =
   zip (fst <$> defs) [n - 1, n - 2 .. 0] ++ argOffset n env
   where n = length defs
 
+-- Compilation scheme for alternatives/case statements
+compileD
+  :: (Int -> GmCompiler) -- compiler for alternative bodies
+  -> [CoreAlter]         -- list of alternatives
+  -> GmEnv Int           -- the current environment
+  -> [(Int, GmCode)]     -- list of alternative code sequences
+compileD comp alts env =
+  [ ( tag
+    , comp (length names) body
+      $  zip names [0 ..]
+      ++ argOffset (length names) env
+    )
+  | (tag, names, body) <- alts
+  ]
+
+-- Compilation scheme for a single alternative; uses the strict context
+compileA :: Int -> GmCompiler
+compileA offset e env = [Split offset] ++ compileE e env ++ [Slide offset]
+
 -- Increase the argument stack offset by n
 argOffset :: Int -> GmEnv Int -> GmEnv Int
 argOffset n env = [ (v, n + m) | (v, m) <- env ]
 
+-- Exercise 3.26: why has the initial code sequence changed? I'm still not sure
+-- why the Unwind should be changed to Eval. I believe that this should always
+-- fully evaluate the result to WHNF
 initialCode :: GmCode
-initialCode = [Pushglobal "main", Unwind]
+initialCode = [Pushglobal "main", Unwind, Print]
