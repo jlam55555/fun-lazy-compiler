@@ -24,7 +24,10 @@ compile prog = GmState "" initialCode [] [] h e statInitial
 
 buildInitialHeap :: CoreProgram -> (GmHeap, GmEnv Addr)
 buildInitialHeap prog = mapAccuml allocSc hInitial compiled
-  where compiled = (compileSc <$> preludeDefs ++ prog) ++ compiledPrimitives
+ where
+  compiled =
+    (compileSc <$> preludeDefs ++ extraPreludeDefsGM ++ prog)
+      ++ compiledPrimitives
 
 compiledPrimitives :: [GmCompiledSC]
 compiledPrimitives =
@@ -39,14 +42,14 @@ compiledPrimitives =
   , compile2 "<=" Le
   , compile2 ">"  Gt
   , compile2 ">=" Ge
-  , compiledIf
+  -- , compiledIf -- Removed in Mark 6
   ]
  where
   compile2 op opcode =
     (op, 2, [Push 1, Eval, Push 1, Eval, opcode, Update 2, Pop 2, Unwind])
   compile1 op opcode = (op, 1, [Push 0, Eval, opcode, Update 1, Pop 1, Unwind])
-  compiledIf =
-    ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
+  -- compiledIf =
+  --   ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
 
 -- Introduced in Mark 5 with strict evaluation contexts
 builtInBinary :: AssocList Name Instruction
@@ -92,8 +95,9 @@ compileE (EAp (EAp (EVar binOp) e0) e1) env | hasEntry binOp builtInBinary =
     ++ [lookupDef Add binOp builtInBinary]
 compileE (EAp (EVar "negate") e) env = compileE e env ++ [Neg]
 -- Conditionals may be compiled in a strict context
-compileE (EAp (EAp (EAp (EVar "if") e0) e1) e2) env =
-  compileE e0 env ++ [Cond (compileE e1 env) (compileE e2 env)]
+-- Removed in Mark 6
+-- compileE (EAp (EAp (EAp (EVar "if") e0) e1) e2) env =
+--   compileE e0 env ++ [Cond (compileE e1 env) (compileE e2 env)]
 -- Structured data; introduced in Mark 6
 compileE (ECase scrut rules) env =
   compileE scrut env ++ [Casejump $ compileD compileA rules env]

@@ -48,7 +48,7 @@ dispatch Lt               = comparison (<)
 dispatch Le               = comparison (<=)
 dispatch Gt               = comparison (>)
 dispatch Ge               = comparison (>=)
-dispatch (Cond t f      ) = cond t f
+-- dispatch (Cond t f      ) = cond t f -- replaced in Mark 6
 dispatch (Pack t n      ) = pack t n
 dispatch (Casejump rules) = casejump rules
 dispatch (Split    n    ) = split n
@@ -174,15 +174,16 @@ evalI state = state { gmCode = [Unwind], gmStack = [a], gmDump = d' }
   a : s = gmStack state
 
 -- Cond opcode, introduced in Mark 4
-cond :: GmCode -> GmCode -> GmStateT
-cond t f state = state { gmCode = branch ++ is, gmStack = as }
- where
-  is     = gmCode state
-  a : as = gmStack state
-  branch = getBranch $ hLookup (gmHeap state) a
-  getBranch (NNum 1) = t
-  getBranch (NNum 0) = f
-  getBranch _        = error "cond: top of stack is not boolean"
+-- Replaced in Mark 6 using the structured data representation
+-- cond :: GmCode -> GmCode -> GmStateT
+-- cond t f state = state { gmCode = branch ++ is, gmStack = as }
+--  where
+--   is     = gmCode state
+--   a : as = gmStack state
+--   branch = getBranch $ hLookup (gmHeap state) a
+--   getBranch (NNum 1) = t
+--   getBranch (NNum 0) = f
+--   getBranch _        = error "cond: top of stack is not boolean"
 
 -- Helper function for arithmetic operators: takes a number and an initial
 -- state, and returns a new state in which the number has been placed into the
@@ -200,11 +201,15 @@ unboxInteger a state = ub $ hLookup (gmHeap state) a
   ub _        = error "unboxInteger: unboxing a non-integer"
 
 -- Similar to `boxInteger`, but takes booleans and stores them as integers
+-- Updated in Mark 6: now returns structured data representation of booleans
 boxBoolean :: Bool -> GmState -> GmState
-boxBoolean b = boxInteger b'
+boxBoolean b state = state { gmStack = a : gmStack state, gmHeap = h' }
  where
-  b' | b         = 1
-     | otherwise = 0
+  (h', a) = hAlloc (gmHeap state) $ NConstr b' []
+  b' | -- 2 is tag of True
+       b         = 2
+     | -- 1 is tag of False
+       otherwise = 1
 
 -- Generic unary operator, introduced in Mark 4
 primitive1

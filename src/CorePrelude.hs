@@ -1,10 +1,12 @@
 module CorePrelude
   ( preludeDefs
   , extraPreludeDefs
+  , extraPreludeDefsGM
   ) where
 
 import           Evaluators.TemplateInstantiation.Node
 import           Language
+import           Parser
 
 -- Standard Prelude for Core
 -- This Haskell module is not called Prelude to avoid shadowing our Prelude)
@@ -29,6 +31,7 @@ preludeDefs =
   , ("twice", ["f"], EAp (EAp (EVar "compose") (EVar "f")) (EVar "f"))
   ]
 
+-- Extra prelude defs (for TI)
 -- Introduced in section 2.3.4.
 -- Execise 2.20: Add definitions for conditionals.
 -- Exercise 2.22: Add definitions for pair.
@@ -85,3 +88,7 @@ extraPreludeDefs =
     , EAp (EAp (EVar "==") (EAp (EVar "length") (EVar "l"))) (ENum 0)
     )
   ]
+
+-- Extra prelude defs (for GM)
+extraPreludeDefsGM :: CoreProgram
+extraPreludeDefsGM = parse "if c t f = case c of <1> -> f ; <2> -> t"

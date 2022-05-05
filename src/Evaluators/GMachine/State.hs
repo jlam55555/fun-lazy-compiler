@@ -34,7 +34,7 @@ data Instruction
   | Eval
   | Add | Sub | Mul | Div | Neg
   | Eq | Ne | Lt | Le | Gt | Ge
-  | Cond GmCode GmCode
+  -- | Cond GmCode GmCode -- replaced in Mark 6
   | Pack Int Int
   | Casejump [(Int, GmCode)]
   | Split Int

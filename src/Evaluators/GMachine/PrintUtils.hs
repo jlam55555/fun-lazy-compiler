@@ -13,34 +13,35 @@ import           Iseq
 import           Language
 
 instance Show Instruction where
-  show Unwind         = "unwind"
-  show (Pushglobal n) = "pushglobal " ++ n
-  show (Pushint    n) = "pushint " ++ show n
-  show (Push       n) = "pusharg " ++ show n
-  show Mkap           = "mkap"
-  show (Update n)     = "update " ++ show n
-  show (Pop    n)     = "pop " ++ show n
-  show (Alloc  n)     = "alloc " ++ show n
-  show (Slide  n)     = "slide " ++ show n
-  show Eval           = "eval"
-  show Add            = "add"
-  show Sub            = "sub"
-  show Mul            = "mul"
-  show Div            = "div"
-  show Neg            = "neg"
-  show Eq             = "eq"
-  show Ne             = "ne"
-  show Lt             = "lt"
-  show Le             = "le"
-  show Gt             = "gt"
-  show Ge             = "ge"
-  show (Cond t f)     = iDisplay $ iConcat
-    [ iStr "cond t"
-    , iIndent $ shortShowInstructions 3 t
-    , iNewline
-    , iStr "     f"
-    , iIndent $ shortShowInstructions 3 f
-    ]
+  show Unwind           = "unwind"
+  show (Pushglobal n)   = "pushglobal " ++ n
+  show (Pushint    n)   = "pushint " ++ show n
+  show (Push       n)   = "pusharg " ++ show n
+  show Mkap             = "mkap"
+  show (Update n)       = "update " ++ show n
+  show (Pop    n)       = "pop " ++ show n
+  show (Alloc  n)       = "alloc " ++ show n
+  show (Slide  n)       = "slide " ++ show n
+  show Eval             = "eval"
+  show Add              = "add"
+  show Sub              = "sub"
+  show Mul              = "mul"
+  show Div              = "div"
+  show Neg              = "neg"
+  show Eq               = "eq"
+  show Ne               = "ne"
+  show Lt               = "lt"
+  show Le               = "le"
+  show Gt               = "gt"
+  show Ge               = "ge"
+  -- Cond replaced in Mark 6
+  -- show (Cond t f)     = iDisplay $ iConcat
+  --   [ iStr "cond t"
+  --   , iIndent $ shortShowInstructions 3 t
+  --   , iNewline
+  --   , iStr "     f"
+  --   , iIndent $ shortShowInstructions 3 f
+  --   ]
   show (Pack t n      ) = "pack " ++ show t ++ " " ++ show n
   show (Casejump rules) = iDisplay $ iConcat
     [ iStr "casejump ["
@@ -52,12 +53,10 @@ instance Show Instruction where
   show (Split n) = "split " ++ show n
   show Print     = "print"
 
+-- TODO: show output in "structured form" (Exercise 3.36); also requires
+-- changes in the print opcode
 showOutput :: [GmState] -> String
-showOutput trace = iDisplay $ showNode state a node
- where
-  state = last trace
-  a : _ = gmStack state
-  node  = hLookup (gmHeap state) a
+showOutput trace = gmOutput state where state = last trace
 
 showTrace :: [GmState] -> String
 showTrace states = iDisplay $ iConcat
