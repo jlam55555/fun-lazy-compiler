@@ -7,6 +7,7 @@ module Parser.Core
   , pLam
   , pLet
   , pCase
+  , pConstr
   ) where
 
 import           Language
@@ -34,20 +35,22 @@ pSc = pThen4 mk_sc pVar (pZeroOrMore pVar) pEq pExpr
   where mk_sc name args _ body = (name, args, body)
 
 -- Parse an expression
-pExpr, pAtom, pCase, pLam, pAp, pLet :: Parser CoreExpr
+pExpr, pAtom, pCase, pLam, pAp, pLet, pConstr :: Parser CoreExpr
 pExpr = foldl1 pAlt [pLet, pCase, pLam, pExpr1]
 
 -- Exercise 1.21: Complete the parser, except for EAp (and infix ops).
 -- Exercise 1.23: Implement mk_ap_chain for function application.
 pAtom = foldl1 pAlt [pEVar, pENum, pConstr, pWrappedExpr]
  where
-  mk_constr _ eConstr _ = eConstr
   pEVar        = pApply pVar EVar
   pENum        = pApply pNum ENum
-  pConstr      = pThen3 mk_constr pPre pInd pRBkt
-  pPre         = pThen undefined pKwPack pLBkt
-  pInd         = pThen3 (\n1 _ n2 -> EConstr n1 n2) pNum pCom pNum
   pWrappedExpr = pThen3 (\_ e _ -> e) pLPar pExpr pRPar
+
+pConstr = pThen3 mk_constr pPre pInd pRBkt
+ where
+  mk_constr _ eConstr _ = eConstr
+  pPre = pThen undefined pKwPack pLBkt
+  pInd = pThen3 (\n1 _ n2 -> EConstr n1 n2) pNum pCom pNum
 
 pAp = pApply (pOneOrMore pAtom) mk_ap_chain where mk_ap_chain = foldl1 EAp
 

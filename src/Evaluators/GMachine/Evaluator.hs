@@ -7,6 +7,8 @@ import           Evaluators.GMachine.State
 import           Alloc
 import           Data.AssocList
 import           Language
+import           Lexer
+import           Parser.Core
 
 eval :: GmState -> [GmState]
 eval state = state : restStates
@@ -56,10 +58,28 @@ dispatch Print            = printI
 
 -- Push global onto stack
 pushglobal :: Name -> GmStateT
-pushglobal f state = state { gmStack = a : gmStack state }
+pushglobal f state = state { gmStack = a : gmStack state
+                           , gmHeap  = h'
+                           , gmEnv   = e'
+                           }
  where
-  a =
-    lookupDef (error $ "pushglobal: undeclared global: " ++ f) f $ gmEnv state
+  -- Exercise 3.38: Pack{t,n} may need to be dynamically generated
+  -- (introduced in Mark 6). These can also be generated at compile-
+  -- time, but this complicates the signatures of the compile schemes.
+  -- Probably inefficient to use a full parser for this, but it is
+  -- convenient and only needs to be called when the Pack{t,n} is
+  -- encountered for the first time. If the looked up variable is
+  -- not of the form Pack{t,n}, then there is an undeclared global.
+  h           = gmHeap state
+  e           = gmEnv state
+  (h', a, e') = getHeapAddr $ lookupDef hNull f $ gmEnv state
+   where
+    getHeapAddr a' | a' == hNull = updateEnv $ makePackSc $ pConstr $ clex f
+                   | otherwise   = (h, a', e)
+    updateEnv (h'', a') = (h'', a', (f, a') : e)
+    makePackSc ((EConstr t n, []) : []) =
+      hAlloc h $ NGlobal n [Pack t n, Update 0, Unwind]
+    makePackSc _ = error $ "pushglobal: undeclared global: " ++ f
 
 -- Allocate int and push onto stack
 -- Exercise 3.6: Reuse number nodes

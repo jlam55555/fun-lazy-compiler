@@ -114,7 +114,7 @@ compileC (ELet isRec defs e) env | isRec     = compileLetrec compileC defs e env
                                  | otherwise = compileLet compileC defs e env
 -- Mark 6: need to handle constructors
 compileC e@(EAp e1 e2) env
-  | saturatedConstr $ spine = compiledConstr
+  | saturatedConstr spine = compiledConstr
   | otherwise = compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
  where
   -- Compiled code if constructor
@@ -132,11 +132,12 @@ compileC e@(EAp e1 e2) env
   spine' e'            = [e']
 -- Special handling for nullary constructors
 compileC (EConstr t 0) _ = [Pack t 0]
--- Other forms are invalid; they can only be reached via program transformations
-compileC (EConstr _ _) _ =
-  error "compileC: constr incorrectly tagged with 0 args"
-compileC (ECase _ _) _ = error "compileC: case in non-strict context"
-compileC (ELam  _ _) _ = error "compileC: lambda not implemented"
+-- Constructor applied to too few arguments; exercise 3.38
+compileC (EConstr t a) _ =
+  [Pushglobal $ "Pack{" ++ show t ++ "," ++ show a ++ "}"]
+compileC (ECase _ _) _ =
+  error "compileC: case in non-strict context; rewrite case as sc"
+compileC (ELam _ _) _ = error "compileC: lambda not implemented"
 
 -- Compile a letrec expression
 compileLetrec :: GmCompiler -> [(Name, CoreExpr)] -> GmCompiler
