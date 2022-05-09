@@ -59,11 +59,16 @@ $ flc -eti examples/nats.core examples/map.core examples/pe1.core
 ```
 
 ##### G-Machine
-Compile and export compiled opcodes for the G-Machine.
+Compile and export compiled opcodes for the G-Machine. (Compiled opcodes are currently only for Mark 1 of the G-Machine.)
 ```bash
 $ flc -c -e gm examples/skk3.core
 $ # alternatively:
 $ flc -cegm examples/skk3.core
+```
+
+Also Project Euler 1, but using the G-Machine.
+```bash
+$ flc examples/gmprelude.core examples/pe1.core
 ```
 
 ---

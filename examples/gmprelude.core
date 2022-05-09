@@ -1,0 +1,89 @@
+-- Useful functions for G-Machine programs
+-- The CorePrelude already defines the basic SKI combinators
+-- and `if`, `True`, `False`, `Cons`, and `Nil`
+
+-- Logical operators
+and x y = if x y False ;
+or x y = if x True y ;
+xor x y = if x (not y) y ;
+not x = if x False True ;
+
+-- Useful simple combinators
+id x = x ;
+double x = x + x ;
+
+-- Useful simple arithmetic operators and predicates
+inc x = x + 1 ;
+zero x = x == 0 ;
+even x = x == ((x / 2) * 2) ;
+odd = compose not even ;
+mod m n = m - (m / n) * n ;
+
+add acc val = acc + val ;
+mul acc val = acc * val ;
+
+-- Sample math functions
+fac n = if (zero n) 1 (n * fac (n - 1)) ;
+fib n = if (n < 2) n (fib (n - 1) + fib (n - 2)) ;
+
+-- List operations, LISP-style
+car l = case l of
+  <4> x y -> x ;
+cdr l = case l of
+  <4> x y -> y ;
+length l = case l of
+  <3> -> 0 ;
+  <4> x y -> 1 + length y ;
+nth n l = case l of
+  <3> -> 0 ;
+  <4> x xs -> if (zero n) x (nth (n - 1) xs) ;
+
+caar = compose car car ;
+cadr = compose car cdr ;
+cdar = compose cdr car ;
+cddr = compose cdr cdr ;
+caadr = compose car cadr ;
+caaar = compose car caar ;
+cdadr = compose cdr cadr ;
+cdaar = compose cdr caar ;
+caddr = compose car cddr ;
+cadar = compose car cdar ;
+cdddr = compose cdr cddr ;
+cddar = compose cdr cdar ;
+
+-- Sequences/streams
+numsFrom x = Cons x (numsFrom (x + 1)) ;
+nats = numsFrom 0 ;
+ones = Cons 1 ones ;
+
+-- List operations
+map f lst = case lst of
+  <3> -> Nil ;
+  <4> x xs -> Cons (f x) (map f xs) ;
+filter p lst =
+  case lst of
+  <3> -> Nil ;
+  <4> x xs ->
+    let rest = filter p xs in
+    if (p x) (Cons x rest) rest ;
+foldl f acc lst = case lst of
+  <3> -> acc ;
+  <4> x xs -> foldl f (f acc x) xs ;
+take n lst = if (n <= 0) Nil (take2 n lst) ;
+take2 n lst = case lst of
+  <3> -> Nil ;
+  <4> x xs -> Cons x (take (n - 1) xs) ;
+takeWhile p lst = case lst of
+  <3> -> Nil ;
+  <4> x xs -> if (p x) (Cons x (takeWhile p xs)) Nil ;
+drop n lst = if (n <= 0) lst (drop2 n lst) ;
+drop2 n lst = case lst of
+  <3> -> Nil ;
+  <4> x xs -> drop (n - 1) xs ;
+
+-- Aggregate operations
+sum = foldl add 0 ;
+prod = foldl mul 1 ;
+
+-- Useful function to generate a range
+range a b = map (add a) (take ((b - a) + 1) nats)

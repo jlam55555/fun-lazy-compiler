@@ -1,7 +1,7 @@
 -- Requires GM Mark 6
 length xs =
   case xs of
-    <1>      -> 0 ;
-    <2> y ys -> 1 + length ys ;
+    <3>      -> 0 ;
+    <4> y ys -> 1 + length ys ;
 
 main = length (Pack{2,2} 3 (Pack{2,2} 5 Pack{1,0}))
