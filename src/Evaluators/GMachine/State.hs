@@ -8,6 +8,8 @@ module Evaluators.GMachine.State
   , GmEnv
   , GmState(..)
   , Node(..)
+  , PrintPreorderNode(..)
+  , PrintTreeNode(..)
   , statInitial
   , statIncSteps
   , statGetSteps
@@ -41,7 +43,11 @@ data Instruction
   | Print
   deriving Eq
 
-type GmOutput = String
+data PrintPreorderNode = PPNStruct Int Int | PPNNum Int
+  deriving Show
+data PrintTreeNode = PTNStruct Int [PrintTreeNode] | PTNNum Int
+  deriving Show
+type GmOutput = [PrintPreorderNode]
 
 type GmStack = [Addr]
 type GmHeap = Heap Node

@@ -297,8 +297,11 @@ printI state = state { gmCode = is', gmOutput = o', gmStack = s' }
   node          = hLookup (gmHeap state) a
   -- Updated stack and instructions depends on the data node
   (is', o', s') = printI' node
-  printI' (NNum n) = (gmCode state, gmOutput state ++ " " ++ show n, as)
-  printI' (NConstr _ args) =
-    (printIs (length args) ++ gmCode state, gmOutput state, args ++ as)
+  printI' (NNum n) = (gmCode state, gmOutput state ++ [PPNNum n], as)
+  printI' (NConstr tag args) =
+    ( printIs (length args) ++ gmCode state
+    , gmOutput state ++ [PPNStruct tag (length args)]
+    , args ++ as
+    )
     where printIs n = concat $ take n $ repeat [Eval, Print]
   printI' _ = error "print: non-data node"

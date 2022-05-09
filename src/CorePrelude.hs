@@ -91,4 +91,10 @@ extraPreludeDefs =
 
 -- Extra prelude defs (for GM)
 extraPreludeDefsGM :: CoreProgram
-extraPreludeDefsGM = parse "if c t f = case c of <1> -> f ; <2> -> t"
+extraPreludeDefsGM = parse $ concat
+  [ "if c t f = case c of <1> -> f ; <2> -> t ;"
+  , "False = Pack{1,0} ;"
+  , "True = Pack{2,0} ;"
+  , "Nil = Pack{3,0} ;"
+  , "Cons = Pack{4,2}"
+  ]

@@ -53,10 +53,10 @@ instance Show Instruction where
   show (Split n) = "split " ++ show n
   show Print     = "print"
 
--- TODO: show output in "structured form" (Exercise 3.36); also requires
+-- Show output in "structured form" (Exercise 3.36); also requires
 -- changes in the print opcode
 showOutput :: [GmState] -> String
-showOutput trace = gmOutput state where state = last trace
+showOutput trace = printTree $ gmOutput state where state = last trace
 
 showTrace :: [GmState] -> String
 showTrace states = iDisplay $ iConcat
@@ -96,7 +96,7 @@ showInstructions is = iConcat
 
 showState :: GmState -> Iseq
 showState state = iConcat
-  [ showOutput' state
+  [ showOutput'
   , iNewline
   , showStack state
   , iNewline
@@ -105,12 +105,9 @@ showState state = iConcat
   , showInstructions $ gmCode state
   , iNewline
   ]
-
--- Show the GmOutput (different from `showOutput`, which is part of the
--- interface for the compiler); introduced in Mark 6
-showOutput' :: GmState -> Iseq
-showOutput' state =
-  iConcat [iStr "Output:\"", iStr $ gmOutput state, iStr "\""]
+ where
+  showOutput' =
+    iConcat [iStr "Output: \"\n", iStr $ showOutput [state], iStr "\""]
 
 showStack :: GmState -> Iseq
 showStack state = iConcat
@@ -170,3 +167,58 @@ shortShowStack s =
 showStats :: GmState -> Iseq
 showStats state =
   iConcat [iStr "Steps taken = ", iNum $ statGetSteps $ gmStats state]
+
+-- Inorder to tree
+printToTree :: [PrintPreorderNode] -> Maybe PrintTreeNode
+printToTree []    = Nothing
+printToTree inord = getResult $ printToTree' [(1, PTNStruct (-1) [])] inord
+ where
+  getResult (Just [(0, PTNStruct (-1) [n])]) = Just $ reverseTree n
+  getResult Nothing                          = Nothing
+  getResult _                                = error "printToTree: invalid tree"
+  reverseTree n@(PTNNum _) = n
+  reverseTree (PTNStruct tag children) =
+    PTNStruct tag $ reverse $ reverseTree <$> children
+
+-- Helper function for inorder -> tree
+printToTree'
+  :: [(Int, PrintTreeNode)]
+  -> [PrintPreorderNode]
+  -> Maybe [(Int, PrintTreeNode)]
+-- Done
+printToTree' final@[(0, _)] [] = Just final
+-- 0 elements left, pop the stack
+printToTree' ((0, n) : (arity, PTNStruct tag children) : ppns) inord =
+  printToTree' ((arity, PTNStruct tag (n : children)) : ppns) inord
+printToTree' ((arity, PTNStruct tag children) : ppns) (n : ns) = printToTree''
+  n
+ where
+  printToTree'' (PPNNum n') =
+    printToTree' ((arity - 1, PTNStruct tag (PTNNum n' : children)) : ppns) ns
+  printToTree'' (PPNStruct tag' arity') = printToTree'
+    ((arity', PTNStruct tag' []) : (arity - 1, PTNStruct tag children) : ppns)
+    ns
+printToTree' _ _ = Nothing
+
+-- Print tree
+printTree :: [PrintPreorderNode] -> String
+printTree = toString . printToTree
+ where
+  toString Nothing     = ""
+  toString (Just tree) = iDisplay $ printTree' tree
+
+printTree' :: PrintTreeNode -> Iseq
+printTree' (PTNNum n              ) = iNum n
+printTree' (PTNStruct tag children) = printNode tag $ length children
+ where
+  printNode 1 0 = iStr "False"
+  printNode 2 0 = iStr "True"
+  printNode 3 0 = iStr "Nil"
+  printNode 4 2 = regularStruct $ iStr "Cons"
+  printNode n _ = regularStruct $ iNum n
+  regularStruct tag' = iConcat
+    [ tag'
+    , iStr "{"
+    , iIndent $ iInterleave (iStr ",\n") $ printTree' <$> children
+    , iStr "}"
+    ]
